@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小楚君的树洞 - 话题详情</title>
+  <style>
+    body { margin: 0; padding: 0; background: #f9f9f5; font-family: Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    .top { padding: 15px 20px; background: #fff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .top-left { display: flex; align-items: center; }
+    .top-left img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+    .top-left span { font-weight: bold; color: #333; }
+    .top-right { color: #999; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+    .top-right button { padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; font-size: 12px; }
+    .logout-btn { background: #ff8a80; color: white; }
+    .switch-btn { background: #fff3e0; color: #ff8a80; border: 1px solid #ff8a80; }
+
+.content { 
+  flex: 1; 
+  padding: 20px; 
+  overflow-y: auto; 
+  padding-bottom: 80px; /* 关键这行！留出底部导航空间 */
+}
+    .topic-header { background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; text-align: center; }
+    .topic-header .icon { font-size: 50px; margin-bottom: 15px; }
+    .topic-header h1 { margin: 0 0 10px; font-size: 24px; color: #333; }
+    .topic-header p { color: #666; font-size: 16px; }
+
+    .post-box { background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; display: flex; align-items: center; }
+    .post-box .id { color: #999; font-size: 12px; margin-right: 10px; }
+    .post-box textarea { flex: 1; border: none; outline: none; font-size: 16px; resize: none; height: 60px; padding: 10px; }
+    .post-box button { background: #80cbc4; color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-size: 16px; }
+
+    .reply-card { background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; cursor: pointer; }
+    .reply-card p { margin: 0 0 10px; }
+    .reply-card .author { color: #999; font-size: 14px; }
+    .reply-card .time { float: right; color: #ccc; font-size: 12px; }
+    .reply-card .actions { margin-top: 10px; display: flex; justify-content: flex-end; gap: 30px; font-size: 16px; color: #666; }
+    .reply-card .like { cursor: pointer; }
+    .reply-card .comment { cursor: pointer; }
+
+    .reply-card .comments { margin-top: 15px; background: #f0f0f0; padding: 10px; border-radius: 15px; display: none; }
+    .reply-card .comments.show { display: block; }
+    .reply-card .comment-input { display: flex; margin-top: 10px; }
+    .reply-card .comment-input textarea { flex: 1; border: 1px solid #ddd; border-radius: 20px; padding: 10px; resize: none; font-size: 14px; }
+    .reply-card .comment-input button { background: #80cbc4; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-left: 10px; cursor: pointer; }
+    .reply-card .comment-item { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+    .reply-card .comment-item:last-child { border-bottom: none; }
+
+    .bottom-nav { background: #fff; display: flex; justify-content: space-around; padding: 15px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); position: fixed; bottom: 0; width: 100%; }
+    .nav-item { text-align: center; color: #999; font-size: 12px; cursor: pointer; }
+    .nav-item.active { color: #80cbc4; }
+    .nav-item img { width: 24px; height: 24px; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <div class="top">
+  <div class="top-left">
+  <button style="background:none;border:none;font-size:28px;cursor:pointer;margin-right:10px;" onclick="history.back()">←</button>
+  <img src="logo.png" alt="Logo">
+  <span>小楚君的树洞</span>
+</div>
+    <div class="top-right">
+      欢迎，<span id="nickname">加载中...</span>
+      <button class="logout-btn" onclick="logout()">退出登录</button>
+      <button class="switch-btn" onclick="logout()">切换账户</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="topic-header">
+      <div class="icon" id="topicIcon">💬</div>
+      <h1 id="topicTitle">加载中...</h1>
+      <p id="topicDesc"></p>
+    </div>
+
+    <div class="post-box">
+      <span class="id">当前身份：<span id="currentId">加载中...</span></span>
+      <textarea id="content" placeholder="说说你的看法..."></textarea>
+      <button onclick="sendReply()">发送</button>
+    </div>
+
+    <div id="replies-list"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="location.href='/'">
+      <img src="https://img.icons8.com/color/48/null/leaf.png" alt="广场">
+      <div>树洞广场</div>
+    </div>
+    <div class="nav-item active" onclick="location.href='/topic.html'">
+      <img src="https://img.icons8.com/color/48/null/speech-bubble.png" alt="话题">
+      <div>话题讨论</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/capsule.html'">
+      <img src="https://img.icons8.com/color/48/null/hourglass.png" alt="胶囊">
+      <div>时间胶囊</div>
+    </div>
+  </div>
+
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = '/login.html';
+    }
+
+    const nickname = localStorage.getItem('nickname') || '访客';
+    document.getElementById('nickname').textContent = nickname;
+    document.getElementById('currentId').textContent = nickname;
+
+    function logout() {
+      if (confirm('确定要退出或切换账户吗？')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('nickname');
+        window.location.href = '/login.html';
+      }
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const topicId = urlParams.get('id');
+
+    async function loadTopic() {
+      try {
+        const res = await fetch(`/api/topics/${topicId}`);
+        const topic = await res.json();
+
+        document.getElementById('topicIcon').textContent = topic.icon || '💬';
+        document.getElementById('topicTitle').textContent = topic.title;
+        document.getElementById('topicDesc').textContent = topic.description || '';
+
+        const list = document.getElementById('replies-list');
+        list.innerHTML = topic.replies.map(r => `
+          <div class="reply-card" onclick="toggleComments('${r._id}')">
+            <p>${r.content.replace(/\n/g,'<br>')}</p>
+            <div>
+              <span class="author">— ${r.author}</span>
+              <span class="time">${new Date(r.createdAt).toLocaleString()}</span>
+            </div>
+            <div class="actions">
+              <span class="like" onclick="event.stopPropagation(); likeReply('${r._id}')">❤️ 点赞 (<span class="like-count" id="like-${r._id}">0</span>)</span>
+              <span class="comment" onclick="event.stopPropagation(); toggleComments('${r._id}')">💬 评论 (<span class="comment-count" id="comment-${r._id}">0</span>)</span>
+            </div>
+            <div class="comments" id="comments-${r._id}">
+              <div class="comment-input">
+                <textarea id="comment-input-${r._id}" placeholder="写下你的评论..." onclick="event.stopPropagation();" onfocus="event.stopPropagation();"></textarea>
+                <button onclick="event.stopPropagation(); sendReplyComment('${r._id}')">发送</button>
+              </div>
+              <div id="comment-list-${r._id}">加载中...</div>
+            </div>
+          </div>
+        `).join('') || '<p style="text-align:center;color:#999;">暂无讨论，来打破沉默吧～</p>';
+
+        // 加载每条回复的点赞数和评论数
+        topic.replies.forEach(r => loadLikeAndCommentCount(r._id));
+      } catch (err) {
+        console.log('加载话题失败', err);
+      }
+    }
+
+    // 加载点赞数和评论数
+    async function loadLikeAndCommentCount(replyId) {
+      try {
+        const likeRes = await fetch(`/api/likes/topic-reply/${replyId}`);
+        const likeData = await likeRes.json();
+        const commentRes = await fetch(`/api/comments/topic-reply/${replyId}`);
+        const comments = await commentRes.json();
+
+        document.getElementById('like-' + replyId).textContent = likeData.count || 0;
+        document.getElementById('comment-' + replyId).textContent = comments.length;
+
+        const list = document.getElementById('comment-list-' + replyId);
+        if (comments.length === 0) {
+          list.innerHTML = '<p style="color:#999;padding:10px;">暂无评论，来抢沙发～</p>';
+        } else {
+          list.innerHTML = comments.map(c => `
+            <div class="comment-item">
+              <strong>${c.author}</strong>: ${c.content}
+              <small style="color:#ccc;float:right;">${new Date(c.createdAt).toLocaleString()}</small>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.log('加载数量失败', err);
+      }
+    }
+
+    // 点赞
+    async function likeReply(replyId) {
+      await fetch('/api/likes', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ topicReplyId: replyId, userNickname: nickname })
+      });
+
+      loadLikeAndCommentCount(replyId);
+    }
+
+    // 发送评论
+    async function sendReplyComment(replyId) {
+      const input = document.getElementById('comment-input-' + replyId);
+      const content = input.value.trim();
+      if (!content) return alert('写点评论再发哦～');
+
+      await fetch('/api/comments/topic-reply', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ topicReplyId: replyId, content, author: nickname })
+      });
+
+      input.value = '';
+      loadLikeAndCommentCount(replyId);
+    }
+
+    function toggleComments(replyId) {
+      const comments = document.getElementById('comments-' + replyId);
+      comments.classList.toggle('show');
+    }
+
+    async function sendReply() {
+      const content = document.getElementById('content').value.trim();
+      if (!content) return alert('写点东西再发哦～');
+
+      await fetch(`/api/topics/${topicId}/reply`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ content, author: nickname, isAnonymous: false })
+      });
+
+      document.getElementById('content').value = '';
+      alert('回复成功');
+      loadTopic();
+    }
+
+    loadTopic();
+    setInterval(loadTopic, 10000);
+  </script>
+</body>
+</html>
