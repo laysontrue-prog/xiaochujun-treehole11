@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小楚君的树洞 - 我的</title>
+  <style>
+    /* 保持原风格 */
+    body { margin: 0; padding: 0; background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; color: #2d3748; }
+    .top { padding: 15px 20px; background: #fff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .top-left { display: flex; align-items: center; }
+    .top-left img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+    .top-left span { font-weight: bold; color: #333; }
+    .top-right { color: #999; font-size: 14px; display: flex; align-items: center; gap: 15px; }
+    .top-right button { padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; font-size: 12px; }
+    .logout-btn { background: #ff8a80; color: white; }
+    .switch-btn { background: #fff3e0; color: #ff8a80; border: 1px solid #ff8a80; }
+
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      padding-bottom: 80px; /* 关键这行！留出底部导航空间 */
+    }
+
+    .title { text-align: center; font-size: 24px; color: #333; margin: 20px 0; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+
+    .profile-card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .profile-section {
+      margin-bottom: 30px;
+    }
+
+    .profile-section h3 {
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .profile-item {
+      margin-bottom: 20px;
+    }
+
+    .profile-item label {
+      display: block;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .profile-item input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 15px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    .profile-item input:disabled {
+      background: #f5f5f5;
+      color: #999;
+    }
+
+    button {
+      background: #80cbc4;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #66b3ad;
+    }
+
+    /* 通知铃铛样式 */
+    .notification-bell {
+      position: relative;
+      cursor: pointer;
+      font-size: 24px;
+      color: #999;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px;
+    }
+
+    .notification-bell:hover {
+      color: #80cbc4;
+      transform: scale(1.1);
+    }
+
+    .notification-count {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      min-width: 22px;
+      height: 22px;
+      background: #ff5252;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+    }
+
+    .notification-count.hidden {
+      display: none;
+    }
+
+    /* 通知面板样式 */
+    .notification-panel {
+      position: fixed;
+      top: 75px;
+      right: 20px;
+      width: 380px;
+      max-height: 550px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      z-index: 1000;
+      transform: translateY(-20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .notification-panel.show {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .notification-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid #f5f5f5;
+      font-weight: 600;
+      color: #2d3748;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    .notification-header button {
+      background: none;
+      color: #718096;
+      padding: 8px 12px;
+      font-size: 14px;
+      margin: 0;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .notification-header button:hover {
+      background: #f7fafc;
+      color: #2d3748;
+    }
+
+    .notification-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f9fafb;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      background: #fff;
+    }
+
+    .notification-item:hover {
+      background: #f7fafc;
+      padding-left: 25px;
+    }
+
+    .notification-item.unread {
+      background: #f0fff4;
+      border-left: 3px solid #48bb78;
+    }
+
+    .notification-item.unread:hover {
+      background: #e6fffa;
+    }
+
+    .notification-item .content {
+      font-size: 15px;
+      color: #2d3748;
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+
+    .notification-item .detail {
+      font-size: 13px;
+      color: #718096;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .notification-item .time {
+      font-size: 12px;
+      color: #a0aec0;
+      display: block;
+    }
+
+    #message {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 15px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    #message.success {
+      background: #e8f5e8;
+      color: #2e7d32;
+    }
+
+    #message.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .bottom-nav { background: #fff; display: flex; justify-content: space-around; padding: 15px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); position: fixed; bottom: 0; width: 100%; }
+    .nav-item { text-align: center; color: #999; font-size: 12px; cursor: pointer; }
+    .nav-item.active { color: #80cbc4; }
+    .nav-item img { width: 24px; height: 24px; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="top-left">
+      <button style="background:none;border:none;font-size:28px;cursor:pointer;margin-right:10px;" onclick="history.back()">←</button>
+      <img src="logo.png" alt="Logo">
+      <span>小楚君的树洞</span>
+    </div>
+    <div class="top-right">
+      <div class="notification-bell" onclick="toggleNotifications()">🔔<span class="notification-count hidden" id="notificationCount"></span></div>
+      欢迎，<span id="nickname">加载中...</span>
+      <button class="logout-btn" onclick="logout()">退出登录</button>
+      <button class="switch-btn" onclick="logout()">切换账户</button>
+    </div>
+  </div>
+
+  <!-- 通知面板 -->
+  <div class="notification-panel" id="notificationPanel">
+    <div class="notification-header">
+      消息通知
+      <button onclick="clearAllNotifications()">清空</button>
+    </div>
+    <div id="notificationList">
+      <!-- 通知项将通过JavaScript动态生成 -->
+    </div>
+  </div>
+
+  <div class="content">
+    <h1 class="title">我的信息</h1>
+    <p class="subtitle">个人信息和账户设置</p>
+
+    <div class="profile-card">
+      <div class="profile-section">
+        <h3>基本信息</h3>
+        <div class="profile-item">
+          <label for="studentId">学号</label>
+          <input type="text" id="studentId" disabled>
+        </div>
+        <div class="profile-item">
+          <label for="nickname">昵称</label>
+          <input type="text" id="nicknameField" disabled>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3>修改密码</h3>
+        <div class="profile-item">
+          <label for="oldPassword">当前密码</label>
+          <input type="password" id="oldPassword">
+        </div>
+        <div class="profile-item">
+          <label for="newPassword">新密码</label>
+          <input type="password" id="newPassword">
+        </div>
+        <div class="profile-item">
+          <label for="confirmPassword">确认新密码</label>
+          <input type="password" id="confirmPassword">
+        </div>
+        <button onclick="changePassword()">修改密码</button>
+      </div>
+
+      <div id="message"></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="location.href='/'">
+      <img src="https://img.icons8.com/color/48/null/leaf.png" alt="广场">
+      <div>树洞广场</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/topic.html'">
+      <img src="https://img.icons8.com/color/48/null/speech-bubble.png" alt="话题">
+      <div>话题讨论</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/capsule.html'">
+      <img src="https://img.icons8.com/color/48/null/hourglass.png" alt="胶囊">
+      <div>时间胶囊</div>
+    </div>
+    <div class="nav-item active" onclick="location.href='/profile.html'">
+      <img src="https://img.icons8.com/color/48/null/user.png" alt="我的">
+      <div>我的</div>
+    </div>
+  </div>
+
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = '/login.html';
+    }
+
+    const nickname = localStorage.getItem('nickname') || '访客';
+    document.getElementById('nickname').textContent = nickname;
+    document.getElementById('nicknameField').value = nickname;
+
+    function logout() {
+      if (confirm('确定要退出或切换账户吗？')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('nickname');
+        window.location.href = '/login.html';
+      }
+    }
+
+    // 加载用户信息
+    async function loadUserInfo() {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const user = await res.json();
+        
+        if (user.studentId) {
+          document.getElementById('studentId').value = user.studentId;
+        } else {
+          document.getElementById('studentId').value = '访客用户';
+        }
+      } catch (err) {
+        console.log('加载用户信息失败', err);
+      }
+    }
+
+    // 修改密码
+    async function changePassword() {
+      const oldPassword = document.getElementById('oldPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const message = document.getElementById('message');
+
+      // 验证输入
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        message.textContent = '所有密码字段都需要填写';
+        message.className = 'error';
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        message.textContent = '两次输入的新密码不一致';
+        message.className = 'error';
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        message.textContent = '新密码长度不能少于6个字符';
+        message.className = 'error';
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ oldPassword, newPassword })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          message.textContent = '密码修改成功！';
+          message.className = 'success';
+          // 清空密码输入框
+          document.getElementById('oldPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        } else {
+          message.textContent = data.message || '密码修改失败';
+          message.className = 'error';
+        }
+      } catch (err) {
+        message.textContent = '网络错误，请重试';
+        message.className = 'error';
+      }
+    }
+
+    // 通知功能
+    function toggleNotifications() {
+      const panel = document.getElementById('notificationPanel');
+      panel.classList.toggle('show');
+      // 点击面板外关闭
+      if (panel.classList.contains('show')) {
+        // 打开面板时刷新通知列表
+        loadNotifications();
+        setTimeout(() => {
+          document.addEventListener('click', closeNotificationPanel);
+        }, 100);
+      }
+    }
+
+    function closeNotificationPanel(e) {
+      const panel = document.getElementById('notificationPanel');
+      const bell = document.querySelector('.notification-bell');
+      if (!panel.contains(e.target) && !bell.contains(e.target)) {
+        panel.classList.remove('show');
+        document.removeEventListener('click', closeNotificationPanel);
+      }
+    }
+
+    // 加载通知
+    async function loadNotifications() {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/notifications', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error('获取通知失败');
+        }
+        
+        const data = await res.json();
+        const notifications = data.notifications || [];
+        
+        const notificationList = document.getElementById('notificationList');
+        const notificationCount = document.getElementById('notificationCount');
+        notificationList.innerHTML = '';
+
+        // 计算未读通知数量
+        const unreadCount = data.unreadCount || notifications.filter(n => !n.read).length;
+        
+        // 显示/隐藏通知数量
+        if (unreadCount > 0) {
+          notificationCount.textContent = unreadCount;
+          notificationCount.classList.remove('hidden');
+        } else {
+          notificationCount.classList.add('hidden');
+        }
+
+        if (notifications.length === 0) {
+          notificationList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">暂无通知</div>';
+          return;
+        }
+
+        notifications.forEach(notification => {
+          // 格式化时间
+          const time = new Date(notification.createdAt);
+          const now = new Date();
+          const diff = now - time;
+          const minutes = Math.floor(diff / 60000);
+          const hours = Math.floor(diff / 3600000);
+          const days = Math.floor(diff / 86400000);
+          
+          let timeStr;
+          if (minutes < 1) {
+            timeStr = '刚刚';
+          } else if (minutes < 60) {
+            timeStr = `${minutes}分钟前`;
+          } else if (hours < 24) {
+            timeStr = `${hours}小时前`;
+          } else {
+            timeStr = `${days}天前`;
+          }
+          
+          // 准备详细信息
+          let detailContent = '';
+          switch(notification.type) {
+            case 'reply':
+              detailContent = notification.detail.replyContent || '';
+              break;
+            case 'like':
+              detailContent = notification.detail.postTitle || '';
+              break;
+            case 'capsule':
+              detailContent = notification.detail.capsuleTitle || '';
+              break;
+          }
+          
+          const notificationItem = document.createElement('div');
+          notificationItem.className = `notification-item ${notification.read ? '' : 'unread'}`;
+          notificationItem.innerHTML = `
+            <div class="content">${notification.content}</div>
+            <div class="detail">${detailContent}</div>
+            <div class="time">${timeStr}</div>
+          `;
+          notificationItem.onclick = () => showNotificationDetail(notification);
+          notificationList.appendChild(notificationItem);
+        });
+      } catch (err) {
+        console.error('加载通知失败', err);
+        document.getElementById('notificationList').innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">加载通知失败</div>';
+      }
+    }
+
+    // 显示通知详情
+    function showNotificationDetail(notification) {
+      // 标记为已读
+      markAsRead(notification._id);
+      
+      // 根据通知类型显示不同的详情
+      let detailContent = '';
+      
+      switch(notification.type) {
+        case 'reply':
+          detailContent = `
+            <div style="margin-bottom: 15px;">
+              <strong>帖子标题：</strong>${notification.detail.postTitle}
+            </div>
+            <div style="margin-bottom: 15px;">
+              <strong>回复内容：</strong>${notification.detail.replyContent}
+            </div>
+            <div style="margin-bottom: 15px;">
+              <strong>回复用户：</strong>${notification.detail.replyUser}
+            </div>
+          `;
+          break;
+        case 'like':
+          detailContent = `
+            <div style="margin-bottom: 15px;">
+              <strong>帖子标题：</strong>${notification.detail.postTitle}
+            </div>
+            <div style="margin-bottom: 15px;">
+              <strong>点赞用户：</strong>${notification.detail.likeUser}
+            </div>
+          `;
+          break;
+        case 'capsule':
+          detailContent = `
+            <div style="margin-bottom: 15px;">
+              <strong>胶囊标题：</strong>${notification.detail.capsuleTitle}
+            </div>
+            <div style="margin-bottom: 15px;">
+              <strong>胶囊内容：</strong>${notification.detail.capsuleContent}
+            </div>
+          `;
+          break;
+      }
+      
+      // 显示详细信息
+      alert(`${notification.content}\n\n详细信息：\n${detailContent.replace(/<[^>]+>/g, '')}`);
+    }
+
+    // 标记为已读
+    async function markAsRead(notificationId) {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/notifications/${notificationId}/read`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (res.ok) {
+          // 重新加载通知列表以更新通知数量和状态
+          loadNotifications();
+        }
+      } catch (err) {
+        console.error('标记通知为已读失败', err);
+      }
+    }
+
+    // 清空所有通知
+    async function clearAllNotifications() {
+      if (confirm('确定要清空所有通知吗？')) {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch('/api/notifications/all', {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (res.ok) {
+            loadNotifications();
+          }
+        } catch (err) {
+          console.error('清空通知失败', err);
+        }
+      }
+    }
+
+    // 实时通知更新机制
+    let notificationPollingInterval;
+    const POLLING_INTERVAL = 30000; // 30秒轮询一次
+    
+    // 开始轮询通知
+    function startNotificationPolling() {
+      if (notificationPollingInterval) {
+        clearInterval(notificationPollingInterval);
+      }
+      notificationPollingInterval = setInterval(() => {
+        // 只在面板关闭时轮询，避免重复请求
+        const panel = document.getElementById('notificationPanel');
+        if (!panel.classList.contains('show')) {
+          loadNotifications();
+        }
+      }, POLLING_INTERVAL);
+    }
+    
+    // 停止轮询通知
+    function stopNotificationPolling() {
+      if (notificationPollingInterval) {
+        clearInterval(notificationPollingInterval);
+        notificationPollingInterval = null;
+      }
+    }
+    
+    // 初始加载
+    loadUserInfo();
+    loadNotifications();
+    startNotificationPolling();
+  </script>
+</body>
+</html>
