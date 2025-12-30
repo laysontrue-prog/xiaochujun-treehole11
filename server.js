@@ -37,6 +37,7 @@ app.use('/api/likes', require('./routes/likes'));
 app.use('/api/comments', require('./routes/comments'));
 app.use('/api/capsules', require('./routes/capsules'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/tools', require('./routes/tools'));
 
 // 老师审核页面
 app.get('/admin', (req, res) => {

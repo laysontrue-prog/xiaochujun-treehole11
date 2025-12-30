@@ -24,8 +24,8 @@ router.post('/register', async (req, res) => {
     await user.save();
     console.log('注册成功，新用户：', user); // 加日志，看是否存进数据库
 
-    const token = jwt.sign({ userId: user._id, nickname }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ message: '注册成功', token, nickname });
+    const token = jwt.sign({ userId: user._id, nickname, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ message: '注册成功', token, nickname, role: user.role });
   } catch (err) {
     console.log('注册错误：', err.message); // 加日志，看具体错误
     res.status(500).json({ message: '注册失败，请重试' });
@@ -42,8 +42,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: '学号或密码错误' });
     }
 
-    const token = jwt.sign({ userId: user._id, nickname: user.nickname }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ message: '登录成功', token, nickname: user.nickname });
+    const token = jwt.sign({ userId: user._id, nickname: user.nickname, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ message: '登录成功', token, nickname: user.nickname, role: user.role });
   } catch (err) {
     console.log('登录错误：', err.message);
     res.status(500).json({ message: '登录失败，请重试' });
@@ -79,8 +79,8 @@ router.get('/me', async (req, res) => {
       return res.status(404).json({ message: '用户不存在' });
     }
 
-    // 返回学号和昵称信息（不返回密码）
-    res.json({ studentId: user.studentId, nickname: user.nickname });
+    // 返回学号、昵称和角色信息（不返回密码）
+    res.json({ studentId: user.studentId, nickname: user.nickname, role: user.role });
   } catch (err) {
     console.log('获取用户信息错误：', err.message);
     res.status(500).json({ message: '获取用户信息失败' });
