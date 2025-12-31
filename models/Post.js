@@ -3,9 +3,10 @@ const mongoose = require('mongoose');
 const PostSchema = new mongoose.Schema({
   content: { type: String, required: true },
   author: { type: String, default: '匿名' },
-  userId: { type: String, required: true }, // 添加用户ID字段
+  userId: { type: String }, // 添加用户ID字段，暂时移除required以兼容旧数据
   isAnonymous: { type: Boolean, default: true },
-  status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected'] },
+  status: { type: String, default: 'approved', enum: ['pending', 'approved', 'rejected', 'deleted'] }, // 默认直接通过，增加deleted状态
+  hasSensitive: { type: Boolean, default: false }, // 是否包含敏感词
   likeCount: { type: Number, default: 0 },
   commentCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }

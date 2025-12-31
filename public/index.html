@@ -1230,15 +1230,29 @@
       const content = document.getElementById('content').value.trim();
       if (!content) return alert('写点东西再发哦～');
 
-      await fetch('/api/posts', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ content, author: nickname, isAnonymous: false })
-      });
+      try {
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+          },
+          body: JSON.stringify({ content, author: nickname, isAnonymous: false })
+        });
 
-      document.getElementById('content').value = '';
-      alert('已发送，老师审核后就会显示～');
-      loadPosts();
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || '发送失败');
+        }
+
+        document.getElementById('content').value = '';
+        alert('发送成功！');
+        loadPosts();
+      } catch (err) {
+        console.error('发送失败:', err);
+        alert('发送失败: ' + err.message);
+      }
     }
 
     // 初始加载

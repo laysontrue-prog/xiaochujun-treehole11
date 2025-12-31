@@ -432,8 +432,16 @@
 
   <div class="content">
     <div class="section">
-      <h2>树洞广场待审核</h2>
-      <div id="pending-posts">加载中...</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>树洞广场管理（已发布）</h2>
+        <!-- 筛选区域 -->
+        <div class="filter-bar" style="display: flex; gap: 10px;">
+          <input type="text" id="filter-keyword" placeholder="搜索内容..." style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+          <input type="text" id="filter-author" placeholder="搜索作者..." style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+          <button class="secondary" onclick="loadPosts()">🔍 查询</button>
+        </div>
+      </div>
+      <div id="posts-list">加载中...</div>
     </div>
 
     <div class="section">
@@ -469,60 +477,91 @@
       }, 5000);
     }
 
-    async function loadPendingPosts() {
-      const container = document.getElementById('pending-posts');
-      container.innerHTML = '<div class="loading">正在加载待审核树洞...</div>';
+    // 统一加载帖子列表（带筛选）
+    async function loadPosts() {
+      const container = document.getElementById('posts-list');
+      container.innerHTML = '<div class="loading">正在加载树洞列表...</div>';
       
+      const keyword = document.getElementById('filter-keyword').value;
+      const author = document.getElementById('filter-author').value;
+
       try {
-        const res = await fetch('/api/posts/pending');
-        if (!res.ok) {
-          throw new Error('网络请求失败');
-        }
+        let url = '/api/posts/admin/list?';
+        if(keyword) url += `keyword=${encodeURIComponent(keyword)}&`;
+        if(author) url += `author=${encodeURIComponent(author)}&`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('网络请求失败');
+        
         const posts = await res.json();
         
         if (posts.length === 0) {
-          container.innerHTML = '<div class="no-content">暂无待审核树洞</div>';
+          container.innerHTML = '<div class="no-content">暂无匹配树洞</div>';
           return;
         }
         
-        container.innerHTML = posts.map(p => `
-          <div class="post-card">
+        container.innerHTML = posts.map(p => {
+          const sensitiveMark = p.hasSensitive ? 
+            `<span style="color:red;border:1px solid red;padding:2px 5px;border-radius:4px;font-size:12px;margin-left:5px;">含敏感词</span>` : '';
+          
+          return `
+          <div class="post-card" style="${p.hasSensitive ? 'border: 2px solid #ff6b6b;' : ''}">
+            ${p.hasSensitive ? '<div class="notification-badge" style="top:-10px;right:-10px;">!</div>' : ''}
             <div class="info">
               <p>${p.content.replace(/\n/g,'<br>')}</p>
-              <small>${new Date(p.createdAt).toLocaleString()} —— ${p.author}</small>
+              <small>
+                ${new Date(p.createdAt).toLocaleString()} —— ${p.author}
+                ${sensitiveMark}
+              </small>
             </div>
             <div class="buttons">
-              <button class="approve" onclick="approvePost('${p._id}')">通过</button>
-              <button class="reject" onclick="rejectPost('${p._id}')">拒绝</button>
+              <button class="delete" onclick="deletePost('${p._id}')">删除 (带日志)</button>
             </div>
           </div>
-        `).join('');
+        `}).join('');
 
-        // 检测新的待审核树洞
-        if (posts.length > previousCounts.pendingPosts && previousCounts.pendingPosts !== 0) {
-          const newPosts = posts.length - previousCounts.pendingPosts;
-          showNotification(`有 ${newPosts} 条新的树洞需要审核！`, () => {
-            document.getElementById('pending-posts').scrollIntoView({ behavior: 'smooth' });
-          });
-        }
+        // 更新数量统计（简单处理）
         previousCounts.pendingPosts = posts.length;
       } catch (err) {
-        console.log('加载待审核树洞失败', err);
+        console.log('加载树洞失败', err);
         container.innerHTML = '<div class="no-content" style="color: #ff6b6b;">加载失败，请刷新页面重试</div>';
       }
     }
 
-    async function approvePost(id) {
-      await fetch(`/api/posts/${id}/approve`, {method:'PUT'});
-      alert('已通过');
-      loadPendingPosts();
+    // 删除帖子（带原因输入）
+    async function deletePost(id) {
+      const reason = prompt("请输入删除原因（必填，将记录在操作日志中）：");
+      if (reason === null) return; // 取消
+      if (!reason.trim()) return alert("删除原因不能为空！");
+
+      if(confirm(`确定要删除这条树洞吗？\n原因：${reason}\n此操作不可恢复！`)) {
+        try {
+          const token = localStorage.getItem('token'); // 假设token存储在localStorage
+          const res = await fetch(`/api/posts/${id}/admin`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': token ? `Bearer ${token}` : ''
+            },
+            body: JSON.stringify({ reason })
+          });
+          
+          const data = await res.json();
+          if(res.ok) {
+            alert('删除成功');
+            loadPosts();
+          } else {
+            alert('删除失败: ' + data.message);
+          }
+        } catch(err) {
+          console.error(err);
+          alert('操作失败，请重试');
+        }
+      }
     }
 
-    async function rejectPost(id) {
-      await fetch(`/api/posts/${id}/reject`, {method:'PUT'});
-      alert('已拒绝');
-      loadPendingPosts();
-    }
+    // 废弃旧函数，保留loadTopics等其他逻辑
+    // async function loadPendingPosts() ... -> replaced by loadPosts
 
     async function loadTopics() {
       const container = document.getElementById('topics-list');
@@ -672,10 +711,8 @@
     // 初始加载并获取初始数量
     async function initialLoad() {
       try {
-        // 加载待审核树洞
-        const postRes = await fetch('/api/posts/pending');
-        const posts = await postRes.json();
-        previousCounts.pendingPosts = posts.length;
+        // 加载已发布树洞
+        loadPosts();
         
         // 加载话题
         const topicRes = await fetch('/api/topics');
@@ -690,7 +727,6 @@
         previousCounts.capsules = capsules.length;
         
         // 更新界面
-        loadPendingPosts();
         loadTopics();
         loadAllCapsules();
       } catch (err) {
@@ -707,8 +743,8 @@
         let hasNewContent = false;
         let newContentCount = 0;
         
-        // 检查待审核树洞
-        const postRes = await fetch('/api/posts/pending');
+        // 检查已发布树洞
+        const postRes = await fetch('/api/posts/admin/list');
         const posts = await postRes.json();
         if (posts.length > previousCounts.pendingPosts && previousCounts.pendingPosts !== 0) {
           const newPosts = posts.length - previousCounts.pendingPosts;
@@ -744,7 +780,7 @@
         if (hasNewContent) {
           showNotification(`有 ${newContentCount} 条新内容需要处理！`, () => {
             // 用户点击通知时才刷新页面
-            loadPendingPosts();
+            loadPosts();
             loadTopics();
             loadAllCapsules();
           });
