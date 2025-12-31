@@ -3,12 +3,13 @@ const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { JWT_SECRET } = require('../utils/config');
 
-console.log('auth 路由加载成功，用户模型：', User); // 加日志，检查模型是否加载
+console.log('auth 路由加载成功，用户模型：', User); 
 
 // 注册
 router.post('/register', async (req, res) => {
-  console.log('收到注册请求：', req.body); // 加日志，看请求是否到达
+  console.log('收到注册请求：', req.body);
   const { studentId, nickname, password } = req.body;
   try {
     if (!studentId || !nickname || !password) {
@@ -22,12 +23,12 @@ router.post('/register', async (req, res) => {
 
     const user = new User({ studentId, nickname, password });
     await user.save();
-    console.log('注册成功，新用户：', user); // 加日志，看是否存进数据库
+    console.log('注册成功，新用户：', user);
 
-    const token = jwt.sign({ userId: user._id, nickname, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id, nickname, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ message: '注册成功', token, nickname, role: user.role });
   } catch (err) {
-    console.log('注册错误：', err.message); // 加日志，看具体错误
+    console.log('注册错误：', err.message);
     res.status(500).json({ message: '注册失败，请重试' });
   }
 });
@@ -42,7 +43,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: '学号或密码错误' });
     }
 
-    const token = jwt.sign({ userId: user._id, nickname: user.nickname, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id, nickname: user.nickname, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ message: '登录成功', token, nickname: user.nickname, role: user.role });
   } catch (err) {
     console.log('登录错误：', err.message);
@@ -52,8 +53,23 @@ router.post('/login', async (req, res) => {
 
 // 访客登录
 router.post('/guest', (req, res) => {
-  const token = jwt.sign({ guest: true }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  const token = jwt.sign({ guest: true }, JWT_SECRET, { expiresIn: '1d' });
   res.json({ message: '访客登录成功', token, nickname: '访客' });
+});
+
+// 管理员登录
+router.post('/admin-login', (req, res) => {
+  const { password } = req.body;
+  if (password === 'xiaochujun2025') {
+    const token = jwt.sign(
+      { userId: 'admin', nickname: '管理员', role: 'admin' }, 
+      JWT_SECRET, 
+      { expiresIn: '1d' }
+    );
+    res.json({ message: '管理员登录成功', token });
+  } else {
+    res.status(401).json({ message: '密码错误' });
+  }
 });
 
 // 获取当前用户信息
@@ -66,7 +82,7 @@ router.get('/me', async (req, res) => {
     }
 
     // 解析token获取用户信息
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     
     // 如果是访客用户，直接返回访客信息
     if (decoded.guest) {
@@ -97,7 +113,7 @@ router.post('/change-password', async (req, res) => {
     }
 
     // 解析token获取用户信息
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     
     // 如果是访客用户，不允许修改密码
     if (decoded.guest) {

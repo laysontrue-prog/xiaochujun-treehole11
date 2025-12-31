@@ -1226,9 +1226,28 @@
       }
     }
 
-    async function send() {
+    async function refreshGuestToken() {
+      try {
+        const res = await fetch('/api/auth/guest', { method: 'POST' });
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          return true;
+        }
+      } catch (e) {
+        console.error('Failed to refresh guest token', e);
+      }
+      return false;
+    }
+
+    async function send(retryCount = 0) {
       const content = document.getElementById('content').value.trim();
       if (!content) return alert('写点东西再发哦～');
+
+      if (retryCount > 1) {
+        alert('发送失败，请尝试刷新页面');
+        return;
+      }
 
       try {
         const res = await fetch('/api/posts', {
@@ -1243,6 +1262,23 @@
         const data = await res.json();
 
         if (!res.ok) {
+          // 处理Token无效的情况
+          if (res.status === 401) {
+            // 如果是访客，自动刷新Token并重试
+            // 只要昵称包含"访客"或者是"访客"，都认为是访客
+            if (nickname === '访客' || nickname.startsWith('访客') || localStorage.getItem('nickname')?.startsWith('访客')) {
+              console.log('访客Token无效，尝试刷新...');
+              const refreshed = await refreshGuestToken();
+              if (refreshed) {
+                return send(retryCount + 1);
+              }
+            } else {
+              // 如果是注册用户，提示登录过期
+              alert('登录已过期，请重新登录');
+              logout();
+              return;
+            }
+          }
           throw new Error(data.message || '发送失败');
         }
 

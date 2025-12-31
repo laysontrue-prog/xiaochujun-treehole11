@@ -94,8 +94,8 @@
         const json = await res.json();
         if (res.ok) {
           document.getElementById('msg').textContent = '注册成功！正在登录...';
-          localStorage.setItem('nickname', nickname);
-          localStorage.setItem('token', 'registered'); // 简单token
+          localStorage.setItem('nickname', json.nickname || nickname);
+          localStorage.setItem('token', json.token); // 使用真正的token
           setTimeout(() => window.location.href = '/', 1000);
         } else {
           document.getElementById('msg').textContent = json.message || '注册失败';
@@ -135,21 +135,57 @@
     }
 
     // 访客模式
-    function doGuest() {
-      const guestName = '访客' + Math.floor(Math.random() * 10000);
-      localStorage.setItem('nickname', guestName);
-      localStorage.setItem('token', 'guest');
-      window.location.href = '/';
+    async function doGuest() {
+      try {
+        const res = await fetch('/api/auth/guest', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'}
+        });
+        const json = await res.json();
+        if (res.ok && json.token) {
+          // 如果后端返回的是"访客"，我们可以在这里生成一个随机后缀，或者让后端生成
+          // 当前后端返回的是 '访客'
+          const guestName = json.nickname === '访客' ? '访客' + Math.floor(Math.random() * 10000) : json.nickname;
+          
+          localStorage.setItem('nickname', guestName);
+          localStorage.setItem('token', json.token);
+          window.location.href = '/';
+        } else {
+          document.getElementById('msg').textContent = '访客登录失败，请重试';
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('msg').textContent = '网络错误，请重试';
+      }
     }
 
     // 管理员登录（初始密码：xiaochujun2025）
-    function doAdmin() {
+    async function doAdmin() {
       const pwd = document.getElementById('adminPassword').value;
-      if (pwd === 'xiaochujun2025') {
-        localStorage.setItem('isAdmin', 'true');
-        window.location.href = '/admin.html';
-      } else {
-        document.getElementById('msg').textContent = '密码错误';
+      if (!pwd) {
+        document.getElementById('msg').textContent = '请输入管理员密码';
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/auth/admin-login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          localStorage.setItem('isAdmin', 'true');
+          localStorage.setItem('token', data.token); // 存储管理员Token
+          localStorage.setItem('nickname', '管理员');
+          window.location.href = '/admin.html';
+        } else {
+          document.getElementById('msg').textContent = data.message || '密码错误';
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('msg').textContent = '网络错误，请重试';
       }
     }
   </script>

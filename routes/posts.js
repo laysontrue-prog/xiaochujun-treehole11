@@ -49,10 +49,10 @@ router.post('/', auth, async (req, res) => {
 
     const author = isAnonymous ? '匿名' : (req.body.author || req.user.nickname || '用户');
     
-    // 检查是否是访客用户
-    if (req.user.guest) {
-      return res.status(403).json({ message: '访客用户无法发布树洞' });
-    }
+    // 检查是否是访客用户 - 暂时允许访客发布，为了修复"发送失败"的问题，并满足"访客能够正常发送内容"的需求
+    // if (req.user.guest) {
+    //   return res.status(403).json({ message: '访客用户无法发布树洞' });
+    // }
 
     // 敏感词检测
     const sensitiveCheck = sensitiveFilter.check(content);
@@ -108,6 +108,10 @@ router.get('/admin/list', async (req, res) => {
 // 管理员删除帖子（带日志）
 router.delete('/:id/admin', auth, async (req, res) => {
   try {
+    console.log('Delete Request Headers:', req.headers);
+    console.log('Delete Request Body:', req.body);
+    console.log('Delete Request Query:', req.query);
+    
     // 权限检查 (简单检查是否有role字段，实际应更严谨)
     if (!req.user.role || (req.user.role !== 'admin' && req.user.role !== 'moderator')) {
       // 兼容旧的简单认证，如果没有role字段但通过了auth中间件，暂时假设是合法管理操作？
@@ -119,7 +123,12 @@ router.delete('/:id/admin', auth, async (req, res) => {
       }
     }
 
-    const { reason } = req.body;
+    let { reason } = req.body || {};
+    // 如果body里没有，尝试从query里获取（兼容DELETE请求可能丢body的情况）
+    if (!reason) {
+      reason = req.query.reason;
+    }
+
     if (!reason) {
       return res.status(400).json({ message: '删除原因必填' });
     }

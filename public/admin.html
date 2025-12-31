@@ -537,7 +537,9 @@
       if(confirm(`确定要删除这条树洞吗？\n原因：${reason}\n此操作不可恢复！`)) {
         try {
           const token = localStorage.getItem('token'); // 假设token存储在localStorage
-          const res = await fetch(`/api/posts/${id}/admin`, {
+          // 将原因同时放入Query参数，防止DELETE请求体丢失
+          const url = `/api/posts/${id}/admin?reason=${encodeURIComponent(reason)}`;
+          const res = await fetch(url, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -641,7 +643,11 @@
 
     async function deleteTopic(id) {
       if (confirm('确定删除整个话题？不可恢复')) {
-        await fetch(`/api/topics/${id}`, {method:'DELETE'});
+        const token = localStorage.getItem('token');
+        await fetch(`/api/topics/${id}`, {
+          method:'DELETE',
+          headers: { 'Authorization': token ? `Bearer ${token}` : '' }
+        });
         alert('话题已删除');
         loadTopics();
       }
@@ -649,7 +655,11 @@
 
     async function deleteReply(topicId, replyId) {
       if (confirm('确定删除这条回复？')) {
-        await fetch(`/api/topics/${topicId}/reply/${replyId}`, {method:'DELETE'});
+        const token = localStorage.getItem('token');
+        await fetch(`/api/topics/${topicId}/reply/${replyId}`, {
+          method:'DELETE',
+          headers: { 'Authorization': token ? `Bearer ${token}` : '' }
+        });
         alert('回复已删除');
         loadTopics();
       }
@@ -702,7 +712,11 @@
     // 删除胶囊
     async function deleteCapsule(id) {
       if (confirm('确定删除这个时间胶囊？不可恢复')) {
-        await fetch(`/api/capsules/${id}`, {method:'DELETE'});
+        const token = localStorage.getItem('token');
+        await fetch(`/api/capsules/${id}`, {
+          method:'DELETE',
+          headers: { 'Authorization': token ? `Bearer ${token}` : '' }
+        });
         alert('胶囊已删除');
         loadAllCapsules();
       }
