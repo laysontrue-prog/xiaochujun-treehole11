@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 const ReplySchema = new mongoose.Schema({
   content: { type: String, required: true },
+  images: [{ type: String }], // 支持图片
   author: { type: String, default: '匿名' },
+  avatar: { type: String }, // 添加作者头像字段
   isAnonymous: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected'] } // 审核状态

@@ -3,20 +3,30 @@ const router = express.Router();
 const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 
-// 获取用户的通知列表（支持分页）
+// 获取用户的通知列表（支持分页和筛选）
 router.get('/', auth, async (req, res) => {
   const userId = req.user.userId;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
+  const type = req.query.type; // 支持按类型筛选
+  const filter = { userId };
+  
+  if (type) {
+    if (type === 'unread') {
+      filter.read = false;
+    } else {
+      filter.type = type;
+    }
+  }
   
   try {
-    const notifications = await Notification.find({ userId })
+    const notifications = await Notification.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
     
-    const total = await Notification.countDocuments({ userId });
+    const total = await Notification.countDocuments(filter);
     const unreadCount = await Notification.countDocuments({ userId, read: false });
     
     res.json({
@@ -26,6 +36,17 @@ router.get('/', auth, async (req, res) => {
       totalItems: total,
       unreadCount
     });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('服务器错误');
+  }
+});
+
+// 获取未读数量
+router.get('/unread-count', auth, async (req, res) => {
+  try {
+    const count = await Notification.countDocuments({ userId: req.user.userId, read: false });
+    res.json({ count });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('服务器错误');

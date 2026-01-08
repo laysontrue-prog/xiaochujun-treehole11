@@ -3,36 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小楚君的树洞 - 进入</title>
+  <title>进入 - 小楚君的树洞</title>
+  <link rel="prefetch" href="/"> <!-- 预取首页资源 -->
+  <link rel="prefetch" href="/style.css">
   <style>
-    body { margin: 0; padding: 0; background: linear-gradient(to bottom, #e0f2f1, #b2dfdb); height: 100vh; display: flex; justify-content: center; align-items: center; font-family: Arial, sans-serif; }
-    .card { background: #fff; padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 340px; text-align: center; }
-    .logo { width: 80px; height: 80px; border-radius: 20px; background: #b2dfdb; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; font-size: 40px; color: #00695c; }
-    h1 { font-size: 24px; color: #004d40; margin: 10px 0; }
-    p { color: #004d40; font-size: 14px; margin-bottom: 30px; }
-    .tabs { display: flex; margin-bottom: 30px; background: #e0f2f1; border-radius: 25px; overflow: hidden; }
-    .tab { flex: 1; padding: 10px; cursor: pointer; color: #004d40; }
-    .tab.active { background: #fff; border-radius: 25px; }
-    input { width: 100%; padding: 15px; margin: 15px 0; border: 1px solid #b2dfdb; border-radius: 30px; box-sizing: border-box; font-size: 16px; }
-    button { width: 100%; padding: 15px; background: #00695c; color: #fff; border: none; border-radius: 30px; font-size: 18px; cursor: pointer; margin-top: 10px; }
-    button:hover { background: #004d40; }
-    #msg { color: #d32f2f; margin-top: 10px; font-size: 14px; }
-    .form-section { display: none; }
+    /* 核心样式保持内联以实现首屏秒开，非核心移出 */
+    :root {
+      --primary-green: #00695c;
+      --bg-gradient: linear-gradient(to bottom, #e0f2f1, #b2dfdb);
+    }
+    body { margin: 0; padding: 0; background: var(--bg-gradient); min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .card { background: #fff; padding: 30px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 360px; text-align: center; margin: 20px; transition: transform 0.3s ease; }
+    .logo { width: 70px; height: 70px; border-radius: 18px; background: #b2dfdb; margin: 0 auto 15px; display: flex; justify-content: center; align-items: center; font-size: 36px; color: var(--primary-green); box-shadow: 0 4px 10px rgba(0,105,92,0.1); }
+    h1 { font-size: 22px; color: #004d40; margin: 8px 0; font-weight: 600; }
+    p.subtitle { color: #546e7a; font-size: 14px; margin-bottom: 25px; }
+    .tabs { display: flex; margin-bottom: 25px; background: #f5f5f5; border-radius: 16px; padding: 4px; overflow: hidden; border: 1px solid #eee; }
+    .tab { flex: 1; padding: 10px 5px; cursor: pointer; color: #546e7a; font-size: 13px; font-weight: 500; transition: all 0.2s ease; border-radius: 12px; }
+    .tab.active { background: #fff; color: var(--primary-green); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    input { width: 100%; padding: 14px 18px; margin: 10px 0; border: 1px solid #e0e0e0; border-radius: 14px; box-sizing: border-box; font-size: 15px; outline: none; transition: all 0.2s; background: #fcfcfc; }
+    input:focus { border-color: var(--primary-green); background: #fff; box-shadow: 0 0 0 3px rgba(0,105,92,0.05); }
+    button { width: 100%; padding: 14px; background: var(--primary-green); color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,105,92,0.2); }
+    button:hover { background: #004d40; transform: translateY(-1px); box-shadow: 0 6px 15px rgba(0,105,92,0.25); }
+    button:active { transform: translateY(0); }
+    button:disabled { background: #b0bec5; cursor: not-allowed; transform: none; box-shadow: none; }
+    #msg { min-height: 20px; margin-top: 15px; font-size: 13px; font-weight: 500; }
+    .error { color: #d32f2f; }
+    .success { color: #2e7d32; }
+    .form-section { display: none; animation: fadeIn 0.3s ease; }
     .form-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="logo">楚</div>
+    <div class="logo">洞</div>
     <h1>小楚君的树洞</h1>
-    <p>在这里，每个声音都值得被倾听</p>
+    <p class="subtitle">在这里，每个声音都值得被倾听</p>
 
     <!-- 标签页 -->
     <div class="tabs">
-      <div class="tab active" onclick="switchTab('register')">注册</div>
-      <div class="tab" onclick="switchTab('login')">登录</div>
-      <div class="tab" onclick="switchTab('guest')">访客模式</div>
-      <div class="tab" onclick="switchTab('admin')">管理员</div>
+      <div class="tab active" onclick="switchTab('register', event)">注册</div>
+      <div class="tab" onclick="switchTab('login', event)">登录</div>
+      <div class="tab" onclick="switchTab('guest', event)">访客模式</div>
+      <div class="tab" onclick="switchTab('admin', event)">管理员</div>
     </div>
 
     <!-- 注册 -->
@@ -68,11 +81,55 @@
   </div>
 
   <script>
-    function switchTab(tab) {
+    // 通用性能监控与 API 封装
+    const perf = {
+      start: (name) => performance.mark(`${name}-start`),
+      end: (name) => {
+        performance.mark(`${name}-end`);
+        performance.measure(name, `${name}-start`, `${name}-end`);
+        const measure = performance.getEntriesByName(name).pop();
+        console.log(`[Perf] ${name}: ${measure.duration.toFixed(2)}ms`);
+        return measure.duration;
+      }
+    };
+
+    async function apiFetch(url, options = {}, timeout = 30000) { // 增加超时到 30 秒，应对慢网或慢数据库
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+      } catch (err) {
+        clearTimeout(id);
+        throw err;
+      }
+    }
+
+    function switchTab(tab, event) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
+      event.currentTarget.classList.add('active');
       document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
       document.getElementById(tab).classList.add('active');
+      document.getElementById('msg').textContent = '';
+    }
+
+    function showMsg(text, isError = true) {
+      const msg = document.getElementById('msg');
+      msg.textContent = text;
+      msg.className = isError ? 'error' : 'success';
+    }
+
+    function setLoading(btnSelector, isLoading) {
+      const btn = document.querySelector(btnSelector);
+      if (isLoading) {
+        btn.disabled = true;
+        btn.dataset.originalText = btn.textContent;
+        btn.textContent = '请稍候...';
+      } else {
+        btn.disabled = false;
+        btn.textContent = btn.dataset.originalText;
+      }
     }
 
     // 注册
@@ -80,28 +137,33 @@
       const studentId = document.getElementById('regStudentId').value.trim();
       const nickname = document.getElementById('regNickname').value.trim();
       const password = document.getElementById('regPassword').value;
-      if (!studentId || !nickname || !password) {
-        document.getElementById('msg').textContent = '所有字段都要填哦～';
-        return;
-      }
-
+      
+      if (!studentId || !nickname || !password) return showMsg('所有字段都要填哦～');
+      
+      setLoading('#register button', true);
+      perf.start('register');
+      
       try {
-        const res = await fetch('/api/auth/register', {
+        const res = await apiFetch('/api/auth/register', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ studentId, nickname, password })
         });
         const json = await res.json();
+        perf.end('register');
+        
         if (res.ok) {
-          document.getElementById('msg').textContent = '注册成功！正在登录...';
+          showMsg('注册成功！正在进入...', false);
           localStorage.setItem('nickname', json.nickname || nickname);
-          localStorage.setItem('token', json.token); // 使用真正的token
-          setTimeout(() => window.location.href = '/', 1000);
+          localStorage.setItem('token', json.token);
+          setTimeout(() => window.location.href = '/', 500); // 缩短等待时间
         } else {
-          document.getElementById('msg').textContent = json.message || '注册失败';
+          showMsg(json.message || '注册失败');
+          setLoading('#register button', false);
         }
       } catch (err) {
-        document.getElementById('msg').textContent = '网络错误，请重试';
+        showMsg('网络超时或连接失败，请重试');
+        setLoading('#register button', false);
       }
     }
 
@@ -109,83 +171,83 @@
     async function doLogin() {
       const studentId = document.getElementById('loginStudentId').value.trim();
       const password = document.getElementById('loginPassword').value;
-      if (!studentId || !password) {
-        document.getElementById('msg').textContent = '学号和密码都要填哦～';
-        return;
-      }
+      
+      if (!studentId || !password) return showMsg('学号和密码都要填哦～');
+      
+      setLoading('#login button', true);
+      perf.start('login');
 
       try {
-        const res = await fetch('/api/auth/login', {
+        const res = await apiFetch('/api/auth/login', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ studentId, password })
         });
         const json = await res.json();
+        perf.end('login');
+
         if (res.ok && json.token) {
-          document.getElementById('msg').textContent = '登录成功！正在进入...';
+          showMsg('登录成功！正在进入...', false);
           localStorage.setItem('nickname', json.nickname);
           localStorage.setItem('token', json.token);
-          setTimeout(() => window.location.href = '/', 1000);
+          if (json.avatar) localStorage.setItem('userAvatar', json.avatar);
+          setTimeout(() => window.location.href = '/', 500);
         } else {
-          document.getElementById('msg').textContent = json.message || '账号或密码错误';
+          showMsg(json.message || '账号或密码错误');
+          setLoading('#login button', false);
         }
       } catch (err) {
-        document.getElementById('msg').textContent = '网络错误，请重试';
+        showMsg('网络超时或连接失败，请重试');
+        setLoading('#login button', false);
       }
     }
 
     // 访客模式
     async function doGuest() {
+      setLoading('#guest button', true);
       try {
-        const res = await fetch('/api/auth/guest', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'}
-        });
+        const res = await apiFetch('/api/auth/guest', { method: 'POST' });
         const json = await res.json();
         if (res.ok && json.token) {
-          // 如果后端返回的是"访客"，我们可以在这里生成一个随机后缀，或者让后端生成
-          // 当前后端返回的是 '访客'
           const guestName = json.nickname === '访客' ? '访客' + Math.floor(Math.random() * 10000) : json.nickname;
-          
           localStorage.setItem('nickname', guestName);
           localStorage.setItem('token', json.token);
           window.location.href = '/';
         } else {
-          document.getElementById('msg').textContent = '访客登录失败，请重试';
+          showMsg('访客登录失败');
+          setLoading('#guest button', false);
         }
       } catch (err) {
-        console.error(err);
-        document.getElementById('msg').textContent = '网络错误，请重试';
+        showMsg('网络错误');
+        setLoading('#guest button', false);
       }
     }
 
-    // 管理员登录（初始密码：xiaochujun2025）
+    // 管理员登录
     async function doAdmin() {
       const pwd = document.getElementById('adminPassword').value;
-      if (!pwd) {
-        document.getElementById('msg').textContent = '请输入管理员密码';
-        return;
-      }
+      if (!pwd) return showMsg('请输入管理员密码');
       
+      setLoading('#admin button', true);
       try {
-        const res = await fetch('/api/auth/admin-login', {
+        const res = await apiFetch('/api/auth/admin-login', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ password: pwd })
         });
         const data = await res.json();
-        
         if (res.ok) {
           localStorage.setItem('isAdmin', 'true');
-          localStorage.setItem('token', data.token); // 存储管理员Token
+          localStorage.setItem('token', data.token);
           localStorage.setItem('nickname', '管理员');
           window.location.href = '/admin.html';
         } else {
-          document.getElementById('msg').textContent = data.message || '密码错误';
+          showMsg(data.message || '密码错误');
+          setLoading('#admin button', false);
         }
       } catch (err) {
-        console.error(err);
-        document.getElementById('msg').textContent = '网络错误，请重试';
+        showMsg('网络错误');
+        setLoading('#admin button', false);
       }
     }
   </script>

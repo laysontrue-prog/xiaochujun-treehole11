@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Post = require('../models/Post');
+const Comment = require('../models/Comment');
+const Topic = require('../models/Topic');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { JWT_SECRET } = require('../utils/config');
@@ -9,8 +12,8 @@ console.log('auth 路由加载成功，用户模型：', User);
 
 // 注册
 router.post('/register', async (req, res) => {
-  console.log('收到注册请求：', req.body);
   const { studentId, nickname, password } = req.body;
+  console.log('收到注册请求：', studentId);
   try {
     if (!studentId || !nickname || !password) {
       return res.status(400).json({ message: '所有字段都要填哦～' });
@@ -26,7 +29,7 @@ router.post('/register', async (req, res) => {
     console.log('注册成功，新用户：', user);
 
     const token = jwt.sign({ userId: user._id, nickname, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ message: '注册成功', token, nickname, role: user.role });
+    res.json({ message: '注册成功', token, nickname, role: user.role, avatar: user.avatar });
   } catch (err) {
     console.log('注册错误：', err.message);
     res.status(500).json({ message: '注册失败，请重试' });
@@ -35,16 +38,33 @@ router.post('/register', async (req, res) => {
 
 // 登录
 router.post('/login', async (req, res) => {
-  console.log('收到登录请求：', req.body);
+  console.log('收到登录请求：', req.body.studentId);
   const { studentId, password } = req.body;
+  const startTime = Date.now();
   try {
+    console.log('[Auth] 正在查询用户...');
     const user = await User.findOne({ studentId });
-    if (!user || !await user.comparePassword(password)) {
+    console.log(`[Auth] 用户查询耗时: ${Date.now() - startTime}ms`);
+    
+    if (!user) {
+      console.log('[Auth] 用户不存在');
       return res.status(401).json({ message: '学号或密码错误' });
     }
 
+    console.log('[Auth] 正在验证密码...');
+    const passStartTime = Date.now();
+    const isMatch = await user.comparePassword(password);
+    console.log(`[Auth] 密码验证耗时: ${Date.now() - passStartTime}ms`);
+
+    if (!isMatch) {
+      console.log('[Auth] 密码错误');
+      return res.status(401).json({ message: '学号或密码错误' });
+    }
+
+    console.log('[Auth] 登录成功，正在生成Token...');
     const token = jwt.sign({ userId: user._id, nickname: user.nickname, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ message: '登录成功', token, nickname: user.nickname, role: user.role });
+    console.log(`[Auth] 总登录耗时: ${Date.now() - startTime}ms`);
+    res.json({ message: '登录成功', token, nickname: user.nickname, role: user.role, avatar: user.avatar });
   } catch (err) {
     console.log('登录错误：', err.message);
     res.status(500).json({ message: '登录失败，请重试' });
@@ -95,11 +115,94 @@ router.get('/me', async (req, res) => {
       return res.status(404).json({ message: '用户不存在' });
     }
 
-    // 返回学号、昵称和角色信息（不返回密码）
-    res.json({ studentId: user.studentId, nickname: user.nickname, role: user.role });
+    // 返回完整用户信息
+    res.json({ 
+      studentId: user.studentId, 
+      nickname: user.nickname, 
+      avatar: user.avatar,
+      role: user.role,
+      level: user.level || 1,
+      experience: user.experience || 0,
+      checkInHistory: user.checkInHistory || [],
+      consecutiveCheckIns: user.consecutiveCheckIns || 0
+    });
   } catch (err) {
     console.log('获取用户信息错误：', err.message);
     res.status(500).json({ message: '获取用户信息失败' });
+  }
+});
+
+// 更新头像
+router.post('/avatar', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ message: '未登录' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.guest) return res.status(403).json({ message: '访客无法修改头像' });
+
+    const user = await User.findById(decoded.userId);
+    if (!user) return res.status(404).json({ message: '用户不存在' });
+
+    const { avatar } = req.body;
+    if (!avatar) return res.status(400).json({ message: '头像不能为空' });
+
+    // 保存历史头像
+    if (user.avatar && user.avatar !== avatar) {
+      user.avatarHistory = user.avatarHistory || [];
+      user.avatarHistory.unshift(user.avatar); // 添加到开头
+      if (user.avatarHistory.length > 3) {
+        user.avatarHistory.pop(); // 保持最近3个
+      }
+    }
+
+    user.avatar = avatar;
+    await user.save();
+
+    // 1. 强力同步所有帖子 (双重保障：userId 或 author 匹配)
+    // 针对有 userId 的新帖子
+    await Post.updateMany(
+      { userId: user._id, isAnonymous: false },
+      { $set: { authorAvatar: avatar } }
+    );
+    // 针对只有昵称的旧帖子（兜底）
+    await Post.updateMany(
+      { author: user.nickname, isAnonymous: false, userId: { $exists: false } },
+      { $set: { authorAvatar: avatar } }
+    );
+
+    // 2. 强力同步所有评论
+    await Comment.updateMany(
+      { userId: user._id },
+      { $set: { authorAvatar: avatar } }
+    );
+    await Comment.updateMany(
+      { author: user.nickname, userId: { $exists: false } },
+      { $set: { authorAvatar: avatar } }
+    );
+
+    // 3. 强力同步话题回复中的头像
+    // 话题回复是嵌入式数组，直接查询包含该用户昵称的话题
+    const topics = await Topic.find({ "replies.author": user.nickname });
+    for (let topic of topics) {
+      let modified = false;
+      topic.replies.forEach(reply => {
+        // 如果是该用户的实名回复
+        if (reply.author === user.nickname && !reply.isAnonymous) {
+          reply.avatar = avatar;
+          // 顺便补全 userId 以便后续实时联动
+          if (!reply.userId) reply.userId = user._id;
+          modified = true;
+        }
+      });
+      if (modified) {
+        await topic.save();
+      }
+    }
+
+    res.json({ message: '头像更新成功', avatar: user.avatar });
+  } catch (err) {
+    console.log('头像更新错误：', err.message);
+    res.status(500).json({ message: '头像更新失败' });
   }
 });
 
@@ -141,6 +244,85 @@ router.post('/change-password', async (req, res) => {
   } catch (err) {
     console.log('修改密码错误：', err.message);
     res.status(500).json({ message: '修改密码失败' });
+  }
+});
+
+// 签到接口
+router.post('/checkin', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ message: '未登录' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.guest) return res.status(403).json({ message: '访客不能签到哦' });
+
+    const user = await User.findById(decoded.userId);
+    if (!user) return res.status(404).json({ message: '用户不存在' });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // 检查是否已签到
+    if (user.lastCheckIn) {
+      const last = new Date(user.lastCheckIn);
+      last.setHours(0, 0, 0, 0);
+      if (last.getTime() === today.getTime()) {
+        return res.status(400).json({ message: '今天已经签到过了哦' });
+      }
+      
+      // 检查连签
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (last.getTime() === yesterday.getTime()) {
+        user.consecutiveCheckIns += 1;
+      } else {
+        user.consecutiveCheckIns = 1;
+      }
+    } else {
+      user.consecutiveCheckIns = 1;
+    }
+
+    // 计算经验值
+    let expGain = 1;
+    let bonusMsg = '';
+    if (user.consecutiveCheckIns % 30 === 0) {
+      expGain += 20;
+      bonusMsg = '连续签到30天奖励！';
+    } else if (user.consecutiveCheckIns % 7 === 0) {
+      expGain += 5;
+      bonusMsg = '连续签到7天奖励！';
+    }
+
+    user.experience = (user.experience || 0) + expGain;
+    user.lastCheckIn = new Date();
+    user.checkInHistory.push(new Date());
+
+    // 简单的等级计算逻辑 (示例)
+    // Lv1-3: 0-7 exp
+    // Lv4-6: 8-30 exp
+    // Lv7-9: 31-90 exp
+    // Lv10: 91+ exp
+    const oldLevel = user.level || 1;
+    if (user.experience >= 91) user.level = 10;
+    else if (user.experience >= 31) user.level = Math.floor((user.experience - 31) / 20) + 7; // 7,8,9
+    else if (user.experience >= 8) user.level = Math.floor((user.experience - 8) / 8) + 4; // 4,5,6
+    else user.level = Math.floor(user.experience / 3) + 1; // 1,2,3
+    
+    // 限制最大等级10，最小等级1
+    user.level = Math.max(1, Math.min(10, user.level));
+
+    await user.save();
+
+    res.json({
+      message: `签到成功！经验+${expGain} ${bonusMsg}`,
+      level: user.level,
+      experience: user.experience,
+      consecutiveCheckIns: user.consecutiveCheckIns,
+      levelUp: user.level > oldLevel
+    });
+
+  } catch (err) {
+    console.log('签到错误：', err);
+    res.status(500).json({ message: '签到失败' });
   }
 });
 

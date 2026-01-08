@@ -3,112 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小楚君的树洞 - 广场</title>
+  <title>树洞广场</title>
+  <link rel="stylesheet" href="style.css">
   <style>
-    /* 全局样式重置与基础设置 */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      color: #2d3748;
-    }
-    
-    /* 顶部导航 */
-    .top {
-      padding: 15px 20px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .top-left {
-      display: flex;
-      align-items: center;
-    }
-    
-    .top-left img {
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      margin-right: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .top-left span {
-      font-weight: 700;
-      color: #2d3748;
-      font-size: 18px;
-      letter-spacing: -0.5px;
-    }
-    
-    .top-right {
-      color: #718096;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-    
-    .top-right button {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .logout-btn {
-      background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
-      color: #c53030;
-    }
-    
-    .logout-btn:hover {
-      background: linear-gradient(135deg, #feb2b2 0%, #fc8181 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-    }
-    
-    .switch-btn {
-      background: rgba(255, 255, 255, 0.9);
-      color: #4299e1;
-      border: 2px solid rgba(66, 153, 225, 0.3);
-    }
-    
-    .switch-btn:hover {
-      background: rgba(66, 153, 225, 0.1);
-      border-color: rgba(66, 153, 225, 0.6);
-      transform: translateY(-2px);
-    }
-
-    /* 主内容区 */
-    .content { 
-      flex: 1; 
-      padding: 25px; 
-      overflow-y: auto; 
-      padding-bottom: 90px; /* 留出底部导航空间 */
-      max-width: 1000px;
-      margin: 0 auto;
-      width: 100%;
-    }
-    
     /* 标题样式 */
     .title {
       text-align: center;
@@ -127,25 +24,24 @@
       font-weight: 500;
     }
 
-    /* 发布框样式 - Windows 7/苹果OS26风格半透明效果 */
+    /* 发布框样式 - 简约风格 */
     .post-box {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      padding: 25px;
-      border-radius: 24px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-      margin-bottom: 35px;
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: stretch;
       gap: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      z-index: 100;
       transition: all 0.3s ease;
     }
     
     .post-box:hover {
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
       transform: translateY(-2px);
     }
     
@@ -154,42 +50,77 @@
       font-size: 13px;
       font-weight: 500;
       white-space: nowrap;
+      margin-bottom: 5px;
     }
     
     .post-box textarea {
-      flex: 1;
+      width: 100%;
       border: none;
       outline: none;
       font-size: 16px;
       resize: none;
-      height: 70px;
+      min-height: 80px;
       padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 16px;
+      background: #f9fafb;
+      border-radius: 12px;
       color: #2d3748;
       font-family: inherit;
       transition: all 0.3s ease;
     }
     
     .post-box textarea:focus {
-      background: rgba(255, 255, 255, 0.9);
+      background: white;
       box-shadow: 0 0 0 3px rgba(0, 176, 155, 0.1);
     }
     
-    .post-box button {
+    .post-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 5px;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      padding-top: 10px;
+      width: 100%;
+    }
+    
+    .post-tools {
+      display: flex;
+      gap: 15px;
+      position: relative;
+    }
+    
+    .tool-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #999;
+      padding: 5px;
+      border-radius: 5px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .tool-btn:hover {
+      background: #f5f5f5;
+      color: #00b09b;
+    }
+    
+    .send-btn {
       background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
       color: white;
       border: none;
-      padding: 14px 28px;
+      padding: 10px 24px;
       border-radius: 28px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(0, 176, 155, 0.3);
     }
     
-    .post-box button:hover {
+    .send-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(0, 176, 155, 0.4);
       background: linear-gradient(135deg, #009c87 0%, #85b535 100%);
@@ -208,7 +139,7 @@
       border: 1px solid rgba(255, 255, 255, 0.3);
       transition: all 0.3s ease;
       position: relative;
-      overflow: hidden;
+      /* overflow: hidden;  移除此属性以允许表情框溢出显示 */
     }
     
     .post-card::before {
@@ -309,36 +240,6 @@
       /* 调整全局间距 */
       body {
         font-size: 14px;
-      }
-      
-      /* 顶部导航适配 */
-      .top {
-        padding: 12px 15px;
-      }
-      
-      .top-left img {
-        width: 38px;
-        height: 38px;
-        margin-right: 10px;
-      }
-      
-      .top-left span {
-        font-size: 16px;
-      }
-      
-      .top-right {
-        gap: 10px;
-      }
-      
-      .top-right button {
-        padding: 8px 14px;
-        font-size: 12px;
-      }
-      
-      /* 内容区域适配 */
-      .content {
-        padding: 15px;
-        padding-bottom: 80px;
       }
       
       .title {
@@ -582,100 +483,13 @@
     }
 
     /* 底部导航 */
-    .bottom-nav {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      display: flex;
-      justify-content: space-around;
-      padding: 18px 0;
-      box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-    }
+    /* 样式已移至 style.css */
     
     /* 分页控件 */
-    #pagination {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      padding: 25px 0;
-      flex-wrap: wrap;
-    }
-    
-    #pagination button {
-      padding: 10px 18px;
-      border: 2px solid #e2e8f0;
-      border-radius: 25px;
-      background: rgba(255, 255, 255, 0.9);
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      color: #718096;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    
-    #pagination button:hover:not(:disabled) {
-      border-color: #00b09b;
-      color: #00b09b;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 176, 155, 0.2);
-    }
-    
-    #pagination button.active {
-      background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
-      color: white;
-      border-color: #00b09b;
-    }
-    
-    #pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    /* 分页省略号样式 */
-    #pagination .pagination-ellipsis {
-      padding: 10px 8px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #718096;
-    }
+    /* 样式已移至 style.css */
     
     /* 导航项样式 */
-    .nav-item {
-      text-align: center;
-      color: #a0aec0;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      padding: 5px 10px;
-      border-radius: 15px;
-    }
-    
-    .nav-item.active {
-      color: #00b09b;
-      background: rgba(0, 176, 155, 0.1);
-    }
-    
-    .nav-item:hover {
-      color: #00b09b;
-      transform: translateY(-2px);
-    }
-    
-    .nav-item img {
-      width: 28px;
-      height: 28px;
-      margin-bottom: 6px;
-      transition: all 0.3s ease;
-    }
-    
-    .nav-item:hover img {
-      transform: scale(1.2);
-    }
+    /* 样式已移至 style.css */
     
     /* 响应式设计 */
     @media (max-width: 768px) {
@@ -709,11 +523,428 @@
         padding: 8px 12px;
         font-size: 13px;
       }
-      
-      .nav-item img {
-        width: 26px;
-        height: 26px;
-      }
+    }
+    /* 上传区域样式 */
+    .upload-area {
+      margin-bottom: 15px;
+    }
+    .preview-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .preview-item {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+    }
+    .preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .preview-item .remove-btn {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .upload-btn-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .upload-btn-wrapper input[type="file"] {
+      display: none;
+    }
+    .icon-btn {
+      background: #f0f2f5;
+      color: #666;
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover {
+      background: #e4e6eb;
+    }
+    .upload-tip {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+    /* 图片展示网格 */
+    .post-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .post-image {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid #eee;
+    }
+
+    /* 评论区样式优化 */
+    .comment-input {
+      display: flex;
+      align-items: flex-end; /* 底部对齐 */
+      gap: 8px;
+      background: #f0f2f5;
+      padding: 8px 12px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+
+    .comment-input textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      resize: none;
+      height: 24px; /* 默认一行高度 */
+      max-height: 100px;
+      line-height: 24px;
+      padding: 0;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    /* 简约按钮 */
+    .comment-action-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      color: #65676b;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+    }
+
+    .comment-action-btn:hover {
+      background: rgba(0,0,0,0.05);
+      color: var(--primary-color);
+    }
+    
+    .comment-action-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* 修复选择器优先级问题，移除错误的 .comment-input 中间层 */
+    .post-card .comment-send-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%); /* 鲜艳的翠绿色渐变 */
+      color: white !important; /* 强制白色文字 */
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 20px; /* 增加内边距 */
+      border-radius: 20px; /* 稍微减小圆角，更像按钮 */
+      font-size: 13px;
+      height: 34px; /* 固定高度 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); /* 绿色阴影 */
+      letter-spacing: 0.5px;
+    }
+
+    .post-card .comment-send-btn:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%); /* 悬停加深 */
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .post-card .comment-send-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    }
+
+    /* 表情选择器优化 */
+    .emoji-picker, .emoji-picker-popover {
+      position: absolute;
+      bottom: 45px;
+      left: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 0;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 100;
+      width: 320px;
+      height: 280px; /* 固定高度 */
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .emoji-picker.show, .emoji-picker-popover.show {
+      display: flex; /* 覆盖默认的block */
+    }
+
+    /* 顶部导航栏 */
+    .emoji-nav {
+      display: flex;
+      overflow-x: auto;
+      background: #f8f9fa;
+      padding: 8px 8px 0;
+      border-bottom: 1px solid #eee;
+      flex-shrink: 0;
+      scrollbar-width: none; /* Firefox */
+    }
+    .emoji-nav::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+
+    .emoji-nav-item {
+      padding: 6px 12px;
+      margin-right: 4px;
+      border-radius: 6px 6px 0 0;
+      font-size: 13px;
+      color: #666;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      border-bottom: none;
+    }
+
+    .emoji-nav-item:hover {
+      background: #e9ecef;
+    }
+
+    .emoji-nav-item.active {
+      background: white;
+      color: #00b09b;
+      font-weight: 600;
+      border-color: #eee;
+      position: relative;
+      top: 1px; /* 盖住底边框 */
+    }
+
+    /* 内容区域 */
+    .emoji-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      background: white;
+    }
+
+    .emoji-category-group {
+      display: none;
+    }
+
+    /* Grid 调整 */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+    }
+    
+    .emoji-item {
+      cursor: pointer;
+      font-size: 22px;
+      padding: 6px;
+      text-align: center;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    
+    .emoji-item:hover {
+      background-color: #f0f2f5;
+      transform: scale(1.2);
+    }
+    
+
+
+    /* 评论区样式商业化优化 */
+    .comment-box {
+      background: #f7f8fa;
+      padding: 12px;
+      border-radius: 16px;
+      margin-bottom: 15px;
+      border: 1px solid #eee;
+    }
+    
+    .comment-box .id {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .comment-input-area {
+      position: relative;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+      margin-bottom: 10px;
+    }
+
+    .comment-input-area:focus-within {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(128, 203, 196, 0.1);
+    }
+
+    .comment-textarea {
+      width: 100%;
+      border: none;
+      resize: none;
+      min-height: 60px;
+      padding: 12px;
+      font-size: 14px;
+      background: transparent;
+      outline: none;
+      font-family: inherit;
+      box-sizing: border-box;
+      display: block;
+    }
+
+    .comment-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    .comment-tools {
+      display: flex;
+      gap: 10px;
+      position: relative;
+    }
+
+    .comment-tool-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      color: #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .comment-tool-btn:hover {
+      background: #f0f2f5;
+      color: var(--primary-color);
+    }
+    
+    .comment-tool-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .comment-send-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .comment-send-btn:hover {
+      background: var(--secondary-color);
+      transform: translateY(-1px);
+    }
+
+    /* 评论图片预览 */
+    .comment-preview-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+    
+    .comment-preview-item {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #eee;
+    }
+    
+    .comment-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .comment-preview-item .remove-btn {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    /* 通用表情选择器样式 */
+    .emoji-picker-popover {
+      position: absolute;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      border: 1px solid #eee;
+      width: 300px;
+      z-index: 1000;
+      display: none;
+      padding: 10px;
+    }
+    
+    .emoji-picker-popover.show {
+      display: block;
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
   </style>
 </head>
@@ -721,11 +952,14 @@
   <div class="top">
    <div class="top-left">
   <button style="background:none;border:none;font-size:28px;cursor:pointer;margin-right:10px;" onclick="history.back()">←</button>
-  <img src="logo.png" alt="Logo">
-  <span>小楚君的树洞</span>
+  <span>树洞广场</span>
 </div>
     <div class="top-right">
-      欢迎，<span id="nickname">加载中...</span>
+      <div style="display: flex; align-items: center; gap: 8px; margin-right: 15px;">
+        <img id="navAvatar" src="" alt="Avatar" class="user-avatar" style="display: none;">
+        <span id="nickname" style="font-weight: 500; color: #555;">加载中...</span>
+      </div>
+      <button class="check-in-mini-btn" onclick="quickCheckIn()" title="每日签到" style="background: linear-gradient(135deg, #87ceeb 0%, #5f9ea0 100%); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; margin: 0 10px; transition: all 0.3s ease;">📅 签到</button>
       <button class="logout-btn" onclick="logout()">退出登录</button>
       <button class="switch-btn" onclick="logout()">切换账户</button>
     </div>
@@ -738,7 +972,34 @@
     <div class="post-box">
       <span class="id">当前身份：<span id="currentId">加载中...</span></span>
       <textarea id="content" placeholder="今天有什么想对树洞说的吗？..."></textarea>
-      <button onclick="send()">发送</button>
+      
+      <!-- 图片预览区域 -->
+      <div class="preview-list" id="previewList"></div>
+      
+      <div class="post-footer">
+        <div class="post-tools">
+          <!-- 隐藏的文件输入 -->
+          <input type="file" id="imageInput" accept="image/*" multiple onchange="handleImageSelect(event)" style="display:none">
+          
+          <!-- 图片按钮 -->
+          <button class="tool-btn" onclick="document.getElementById('imageInput').click()" title="添加图片">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          </button>
+
+          <!-- 表情按钮 -->
+          <div style="position: relative;">
+            <button class="tool-btn" onclick="togglePostEmoji(event)" title="添加表情">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+            </button>
+            <!-- 主表情选择器容器 -->
+            <div id="post-emoji-picker" class="emoji-picker-popover" style="top: 40px; left: 0;"></div>
+          </div>
+        </div>
+
+        <button class="send-btn" onclick="send()">发送</button>
+      </div>
+      
+      <div class="upload-tip" style="font-size: 12px; color: #ccc; margin-top: 5px; text-align: right;">最多4张，支持自动压缩</div>
     </div>
 
     <div id="posts-list"></div>
@@ -749,9 +1010,12 @@
     </div>
 
     <!-- 分页控件容器 -->
-    <div id="pagination" style="display:flex;justify-content:center;gap:10px;padding:20px 0;">
+    <div id="pagination">
       <!-- 分页控件将在这里动态生成 -->
     </div>
+    
+    <!-- 底部占位符，确保最后的内容不被遮挡 -->
+    <div style="height: 50px; width: 100%;"></div>
   </div>
 
   <div class="bottom-nav">
@@ -764,7 +1028,7 @@
       <div>话题讨论</div>
     </div>
     <div class="nav-item" onclick="location.href='/tools.html'">
-      <img src="https://img.icons8.com/color/48/null/wrench.png" alt="工具" style="border-radius: 50%; background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%); padding: 5px;">
+      <img src="https://img.icons8.com/color/48/null/wrench.png" alt="工具">
       <div>实用工具</div>
     </div>
     <div class="nav-item" onclick="location.href='/capsule.html'">
@@ -783,14 +1047,274 @@
     }
 
     const nickname = localStorage.getItem('nickname') || '访客';
-    document.getElementById('nickname').textContent = nickname;
-    document.getElementById('currentId').textContent = nickname;
+    if (document.getElementById('nickname')) {
+      document.getElementById('nickname').textContent = nickname;
+    }
+    if (document.getElementById('currentId')) {
+      document.getElementById('currentId').textContent = nickname;
+    }
+
+    // 初始化头像显示
+    function initAvatar() {
+      const avatarImg = document.getElementById('navAvatar');
+      if (!avatarImg) return;
+      
+      const savedAvatar = localStorage.getItem('avatar');
+      if (savedAvatar) {
+        avatarImg.src = savedAvatar;
+        avatarImg.style.display = 'block';
+      } else {
+        // 默认头像
+        avatarImg.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${nickname}`;
+        avatarImg.style.display = 'block';
+      }
+
+      // 获取最新用户信息
+      fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.avatar) {
+          avatarImg.src = data.avatar;
+          localStorage.setItem('avatar', data.avatar);
+        }
+        if (data.nickname) {
+          localStorage.setItem('nickname', data.nickname);
+          document.getElementById('nickname').textContent = data.nickname;
+          if (document.getElementById('currentId')) {
+            document.getElementById('currentId').textContent = data.nickname;
+          }
+        }
+      })
+      .catch(err => console.error('Failed to fetch user info', err));
+    }
+    
+    initAvatar();
 
     function logout() {
       if (confirm('确定要退出或切换账户吗？')) {
         localStorage.removeItem('token');
         localStorage.removeItem('nickname');
+        localStorage.removeItem('avatar');
         window.location.href = '/login.html';
+      }
+    }
+
+    // 快速签到功能
+    async function quickCheckIn() {
+      const btn = document.querySelector('.check-in-mini-btn');
+      const originalText = btn.innerHTML;
+      
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '📅 签到中...';
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('请先登录');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const res = await fetch('/api/auth/checkin', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert(data.message);
+          btn.innerHTML = '✅ 已签到';
+          btn.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+          // 3秒后恢复原状
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = 'linear-gradient(135deg, #87ceeb 0%, #5f9ea0 100%)';
+          }, 3000);
+        } else {
+          if (res.status === 401 || res.status === 403) {
+            alert('登录已过期或无效，请重新登录');
+            logout();
+            return;
+          }
+          alert('签到失败: ' + (data.message || '未知错误'));
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      } catch (err) {
+        console.error('签到请求异常:', err);
+        alert('网络错误，请检查连接后重试');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // 获取等级样式类
+    function getLevelClass(level) {
+      if (level >= 10) return 'lv-10';
+      if (level >= 7) return 'lv-7';
+      if (level >= 4) return 'lv-4';
+      return 'lv-1';
+    }
+
+    // 完整的表情列表
+    const emojiList = {
+      '默认': ['😊','😂','😍','🤔','👍','❤️','🎉','😢','😆','😘','😁','😉','😎','😴','😭','🤣','😅','😇','🙂','🙃','😋','😛','🤑','🤗','🤔','🤐','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😷','🤒','🤕','🤢','🤧','😵','🤠','😎','🤓','😕','😟','☹️','😮','😯','😲','😳','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','😤','😡','😠','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖','😺','😸','😹','😻','😼','😽','🙀','😿','😾'],
+      '动物': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐽','🐸','🐵','🙈','🙉','🙊','🐒','🐔','🐧','🐦','🐤','🐣','🐥','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐚','🐞','🐜','🕷','🕸','🐢','🐍','🦎','🦂','🦀','🦑','🐙','🦐','🐠','🐟','🐡','🐬','🦈','🐳','🐋','🐊','🐆','🐅','🐃','🐂','cow','🦌','dromedary_camel','camel','elephant','rhinoceros','gorilla','horse','pig','goat','ram','sheep','dog','poodle','cat','rooster','turkey','dove','rabbit','mouse','rat','chipmunk','paws','dragon','dragon_face','cactus','christmas_tree','evergreen_tree','deciduous_tree','palm_tree','seedling','herb','shamrock','four_leaf_clover','bamboo','tanabata_tree','leaves','fallen_leaf','maple_leaf','mushroom','🌾','💐','🌷','🌹','🥀','🌻','🌼','🌸','🌺','🌎','🌍','🌏','🌕','🌖','🌗','🌘','🌑','🌒','🌓','🌔','🌚','🌝','🌞','🌛','🌜','🌙','💫','⭐️','🌟','✨','⚡️','🔥','💥','☄️','☀️','🌤','⛅️','🌥','☁️','🌦','🌧','⛈','🌩','🌨','❄️','☃️','⛄️','🌬','💨','🌪','🌫','🌊','💧','💦','☔️'],
+      '物品': ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🍈','🍒','🍑','🍍','🥝','🥑','🍅','🍆','🥒','🥕','🌽','🌶','🥔','🍠','🌰','🥜','🍯','🥐','🍞','🥖','🧀','🥚','🍳','🥓','🥞','🍤','🍗','🍖','🍕','🌭','🍔','🍟','🥙','🌮','🌯','🥗','🥘','🍝','🍜','🍲','🍥','🍣','🍱','🍛','🍚','🍙','🍘','🍢','🍡','🍧','🍨','🍦','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🥛','🍼','☕️','🍵','🍶','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🍾','🥄','🍴','🍽','⚽️','🏀','🏈','⚾️','🎾','🏐','🏉','🎱','🏓','🏸','🥅','🏒','🏑','🏏','⛳️','🏹','🎣','🥊','🥋','⛸','🎿','⛷','🏂','🏋️','🤺','🤼','🤸','⛹️','🤾','🏌️','🏄','🏊','🤽','🚣','🏇','🚴','🚵','🏎','🏍','🤸','🤹','🎪','🎭','🎨','🎰','🚂','🚃','🚄','🚅','🚆','🚇','🚈','🚉','🚊','🚝','🚞','🚋','🚌','🚍','🚎','🚐','🚑','🚒','🚓','🚔','🚕','🚖','🚗','🚘','🚙','🚚','🚛','🚜','🚲','🛴','🛵','🚏','🛣','🛤','⛽️','🚨','🚥','🚦','🚧','🛑','⚓️','⛵️','🛶','🚤','🛳','⛴','🛥','🚢','✈️','🛩','🛫','🛬','💺','🚁','🚟','🚠','🚡','🚀','🛰','🛎','🚪','🛌','🛏','🛋','🚽','🚿','🛁','⌛️','⏳','⌚️','⏰','⏱','⏲','🕰','🕛','🕧','🕐','🕜','🕑','🕝','🕒','🕞','🕓','🕟','🕔','🕠','🕕','🕡','🕖','🕢','🕗','🕣','🕘','🕤','🕙','🕥','🕚','🕦','🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘','🌙','🌚','🌛','🌜','🌡','☀️','🌝','🌞','⭐','🌟','🌠','☁️','⛅','⛈','🌤','🌥','🌦','🌧','🌨','🌩','🌪','🌫','🌬','🌀','🌈','🌂','☔','⚡','❄️','☃️','⛄','☄️','🔥','💧','🌊']
+    };
+
+    // 切换表情分类
+    function switchEmojiCategory(pickerId, categoryName) {
+      const picker = document.getElementById(pickerId);
+      if (!picker) return;
+
+      // 更新导航状态
+      picker.querySelectorAll('.emoji-nav-item').forEach(item => {
+        if (item.dataset.category === categoryName) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      // 更新内容显示
+      picker.querySelectorAll('.emoji-category-group').forEach(group => {
+        if (group.dataset.category === categoryName) {
+          group.style.display = 'block';
+        } else {
+          group.style.display = 'none';
+        }
+      });
+    }
+
+    // 渲染表情选择器HTML
+    function renderEmojiPicker(elementId, postId = null) {
+      const picker = document.getElementById(elementId);
+      if (!picker || picker.innerHTML !== '') return;
+
+      let navHtml = '<div class="emoji-nav">';
+      let contentHtml = '<div class="emoji-content">';
+      
+      Object.keys(emojiList).forEach((category, index) => {
+        const isActive = index === 0;
+        const activeClass = isActive ? 'active' : '';
+        const displayStyle = isActive ? 'block' : 'none';
+        
+        navHtml += `<div class="emoji-nav-item ${activeClass}" data-category="${category}" onclick="event.stopPropagation(); switchEmojiCategory('${elementId}', '${category}')">${category}</div>`;
+        
+        contentHtml += `<div class="emoji-category-group" data-category="${category}" style="display: ${displayStyle}">`;
+        contentHtml += '<div class="emoji-grid">';
+        emojiList[category].forEach(emoji => {
+           const onclick = postId 
+              ? `insertEmoji('${postId}', '${emoji}')`
+              : `insertPostEmoji('${emoji}')`;
+           contentHtml += `<div class="emoji-item" onclick="event.stopPropagation(); ${onclick}">${emoji}</div>`;
+        });
+        contentHtml += '</div></div>';
+      });
+      
+      navHtml += '</div>';
+      contentHtml += '</div>';
+      
+      picker.innerHTML = navHtml + contentHtml;
+    }
+
+    // 切换发布框表情选择器
+    function togglePostEmoji(e) {
+      e.stopPropagation();
+      const pickerId = 'post-emoji-picker';
+      const picker = document.getElementById(pickerId);
+      
+      // 关闭其他可能打开的表情选择器
+      document.querySelectorAll('.emoji-picker-popover, .emoji-picker').forEach(el => {
+        if (el !== picker) el.classList.remove('show');
+      });
+      
+      renderEmojiPicker(pickerId);
+      
+      picker.classList.toggle('show');
+    }
+
+    // 插入表情到发布框
+    function insertPostEmoji(emoji) {
+      const input = document.getElementById('content');
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = input.value;
+      input.value = text.substring(0, start) + emoji + text.substring(end);
+      input.focus();
+      input.setSelectionRange(start + emoji.length, start + emoji.length);
+      // document.getElementById('post-emoji-picker').classList.remove('show'); // 保持开启方便连续输入
+    }
+
+    // 全局点击关闭表情选择器
+    document.addEventListener('click', function(e) {
+      document.querySelectorAll('.emoji-picker-popover, .emoji-picker').forEach(el => {
+        // 如果点击的是表情按钮本身，不处理（已在toggle中处理）
+        if (e.target.closest('.tool-btn') || e.target.closest('.emoji-btn') || e.target.closest('.comment-action-btn')) return;
+        
+        el.classList.remove('show');
+        const card = el.closest('.post-card');
+        if (card) card.style.zIndex = '';
+      });
+    });
+
+    function generateEmojiPickerHTML(postId) {
+      // 返回容器 div，内容由 renderEmojiPicker 动态填充
+      return `<div class="emoji-picker" id="emoji-picker-${postId}" onclick="event.stopPropagation()"></div>`; 
+    }
+    
+    // 切换表情选择器显示
+    function toggleEmojiPicker(postId) {
+      const pickerId = 'emoji-picker-' + postId;
+      const picker = document.getElementById(pickerId);
+      const postCard = picker.closest('.post-card');
+      
+      // 关闭其他
+      document.querySelectorAll('.emoji-picker-popover, .emoji-picker').forEach(el => {
+        if (el !== picker) {
+          el.classList.remove('show');
+          const card = el.closest('.post-card');
+          if (card) card.style.zIndex = '';
+        }
+      });
+
+      renderEmojiPicker(pickerId, postId);
+      
+      picker.classList.toggle('show');
+      
+      // 动态调整 z-index，防止被下方帖子遮挡
+      if (postCard) {
+        postCard.style.zIndex = picker.classList.contains('show') ? '100' : '';
+      }
+    }
+
+    // 覆盖 toggleComments 中的 HTML 生成逻辑
+    function toggleComments(postId) {
+      const comments = document.getElementById('comments-' + postId);
+      comments.classList.toggle('show');
+      
+      if (comments.classList.contains('show')) {
+        if (comments.innerHTML.trim() === '') {
+          // 动态生成包含完整表情列表的HTML
+          comments.innerHTML = `
+            <div class="comment-input">
+              <textarea id="comment-input-${postId}" placeholder="写下你的评论..." onclick="event.stopPropagation();" onfocus="event.stopPropagation();"></textarea>
+              <div style="position: relative; display: inline-block;">
+                <button class="emoji-btn" style="border:none;background:none;font-size:24px;cursor:pointer;" onclick="event.stopPropagation(); toggleEmojiPicker('${postId}')">😊</button>
+                ${generateEmojiPickerHTML(postId)}
+              </div>
+              <button onclick="event.stopPropagation(); sendComment('${postId}')">发送</button>
+            </div>
+            <div id="comment-list-${postId}">加载中...</div>
+          `;
+        }
+        loadComments(postId);
       }
     }
 
@@ -814,11 +1338,29 @@
         }
 
         empty.style.display = 'none';
-        list.innerHTML = posts.map(p => `
+        list.innerHTML = posts.map(p => {
+          let levelTag = '';
+          if (p.authorLevel) {
+            levelTag = `<span class="level-tag ${getLevelClass(p.authorLevel)}">Lv.${p.authorLevel}</span>`;
+          }
+          
+          // 图片区域HTML
+          let imagesHtml = '';
+          if (p.images && p.images.length > 0) {
+            imagesHtml = `
+              <div class="post-images" onclick="event.stopPropagation()">
+                ${p.images.map(img => `<img src="${img}" class="post-image" loading="lazy">`).join('')}
+              </div>
+            `;
+          }
+
+          return `
           <div class="post-card" onclick="toggleComments('${p._id}')">
             <p>${p.content.replace(/\n/g,'<br>')}</p>
-            <div>
-              <span class="author">— ${p.author}</span>
+            ${imagesHtml}
+            <div class="author-area">
+              <img class="user-avatar" src="${p.isAnonymous ? 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous' : (p.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author}`)}" alt="avatar" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=fallback'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;">
+              <span class="author">— ${p.author}${levelTag}</span>
               <span class="time">${new Date(p.createdAt).toLocaleString()}</span>
             </div>
             <div class="actions">
@@ -831,7 +1373,7 @@
             </div>
             <div class="comments" id="comments-${p._id}"></div>
           </div>
-        `).join('');
+        `}).join('');
         
         // 保存帖子数据到全局变量，便于后续动态渲染评论区域
         window.postsData = window.postsData || {};
@@ -1038,12 +1580,25 @@
         if (comments.length === 0) {
           list.innerHTML = '<p style="color:#999;padding:10px;">暂无评论，来抢沙发～</p>';
         } else {
-          list.innerHTML = comments.map(c => `
+          list.innerHTML = comments.map(c => {
+            let imagesHtml = '';
+          if (c.images && c.images.length > 0) {
+            imagesHtml = `
+              <div class="post-images" style="margin-top:8px;">
+                ${c.images.map(img => `<img src="${img}" class="post-image" style="width:80px;height:80px;" onerror="this.onerror=null;this.src='https://placehold.co/200x200?text=Error';">`).join('')}
+              </div>
+            `;
+          }
+            return `
             <div class="comment-item">
-              <strong>${c.author}</strong>: ${c.content}
+              <div class="author-area">
+                <img class="user-avatar" src="${c.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}`}" alt="avatar" style="width:20px;height:20px;margin-right:5px;border-radius:50%;object-fit:cover;vertical-align:middle;">
+                <strong>${c.author}</strong>: ${c.content}
+              </div>
+              ${imagesHtml}
               <small style="color:#ccc;float:right;">${new Date(c.createdAt).toLocaleString()}</small>
             </div>
-          `).join('');
+          `}).join('');
         }
       } catch (err) {
         console.log('加载评论失败', err);
@@ -1130,56 +1685,135 @@
       }
     }
 
+    // 评论图片管理
+    const commentPendingImages = new Map(); // Map<postId, string[]>
+
+    async function handleCommentImageSelect(event, postId) {
+      const files = event.target.files;
+      if (!files.length) return;
+
+      let currentImages = commentPendingImages.get(postId) || [];
+      if (currentImages.length + files.length > 4) {
+        alert('最多只能上传 4 张图片');
+        event.target.value = '';
+        return;
+      }
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+        try {
+          const compressedBase64 = await compressImage(file);
+          currentImages.push(compressedBase64);
+        } catch (err) {
+          console.error('图片压缩失败:', err);
+        }
+      }
+      
+      commentPendingImages.set(postId, currentImages);
+      updateCommentPreview(postId);
+      event.target.value = '';
+    }
+
+    function updateCommentPreview(postId) {
+      const list = document.getElementById('comment-preview-' + postId);
+      const images = commentPendingImages.get(postId) || [];
+      
+      if (images.length === 0) {
+        list.style.display = 'none';
+        list.innerHTML = '';
+        return;
+      }
+      
+      list.style.display = 'flex';
+      list.innerHTML = images.map((img, index) => `
+        <div class="comment-preview-item">
+          <img src="${img}">
+          <button class="remove-btn" onclick="removeCommentImage('${postId}', ${index})">×</button>
+        </div>
+      `).join('');
+    }
+
+    function removeCommentImage(postId, index) {
+      let images = commentPendingImages.get(postId) || [];
+      images.splice(index, 1);
+      commentPendingImages.set(postId, images);
+      updateCommentPreview(postId);
+    }
+
     // 发送评论
     async function sendComment(postId) {
       const input = document.getElementById('comment-input-' + postId);
       const content = input.value.trim();
-      if (!content) return alert('写点评论再发哦～');
+      const images = commentPendingImages.get(postId) || [];
+      
+      if (!content && images.length === 0) return alert('写点评论或发张图再发哦～');
 
       // 创建评论对象
       const newComment = {
         author: nickname,
-        content: content,
+        content: content || '分享了一张图片',
+        images: images,
         createdAt: new Date()
       };
 
-      // 发送评论到服务器
-      await fetch('/api/comments/post', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ postId, content, author: nickname })
-      });
+      try {
+        // 发送评论到服务器
+        const res = await fetch('/api/comments/post', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ postId, content: newComment.content, author: nickname, images })
+        });
+        
+        if (!res.ok) throw new Error('发送失败');
 
-      // 清空输入框
-      input.value = '';
-      
-      // 更新本地缓存和DOM中的评论数
-      const currentCounts = countsCache.get(postId) || { likeCount: 0, commentCount: 0 };
-      currentCounts.commentCount += 1;
-      countsCache.set(postId, currentCounts);
-      const commentCountElement = document.getElementById('comment-' + postId);
-      if (commentCountElement) {
-        commentCountElement.textContent = currentCounts.commentCount;
-      }
-      
-      // 立即将新评论添加到DOM中，而不是重新加载整个评论列表
-      const commentListElement = document.getElementById('comment-list-' + postId);
-      if (commentListElement) {
-        // 如果当前没有评论，先清空占位符
-        if (commentListElement.innerHTML.includes('暂无评论')) {
-          commentListElement.innerHTML = '';
+        // 清空输入框和图片
+        input.value = '';
+        commentPendingImages.set(postId, []);
+        updateCommentPreview(postId);
+        
+        // 更新本地缓存和DOM中的评论数
+        const currentCounts = countsCache.get(postId) || { likeCount: 0, commentCount: 0 };
+        currentCounts.commentCount += 1;
+        countsCache.set(postId, currentCounts);
+        const commentCountElement = document.getElementById('comment-' + postId);
+        if (commentCountElement) {
+          commentCountElement.textContent = currentCounts.commentCount;
         }
         
-        // 创建新评论的HTML
-        const newCommentHTML = `
-          <div class="comment-item">
-            <strong>${newComment.author}</strong>: ${newComment.content}
-            <small style="color:#ccc;float:right;">${newComment.createdAt.toLocaleString()}</small>
-          </div>
-        `;
-        
-        // 添加到评论列表的开头
-        commentListElement.insertAdjacentHTML('afterbegin', newCommentHTML);
+        // 立即将新评论添加到DOM中
+        const commentListElement = document.getElementById('comment-list-' + postId);
+        if (commentListElement) {
+          if (commentListElement.innerHTML.includes('暂无评论')) {
+            commentListElement.innerHTML = '';
+          }
+          
+          let imagesHtml = '';
+          if (images.length > 0) {
+            imagesHtml = `
+              <div class="post-images" style="margin-top:8px;">
+                ${images.map(img => `<img src="${img}" class="post-image" onclick="window.open('${img}', '_blank')" style="width:80px;height:80px;">`).join('')}
+              </div>
+            `;
+          }
+          
+          const newCommentHTML = `
+            <div class="comment-item">
+              <div class="author-area">
+                <img class="user-avatar" src="${localStorage.getItem('avatar') || `https://api.dicebear.com/7.x/avataaars/svg?seed=${newComment.author}`}" alt="avatar" style="width:20px;height:20px;margin-right:5px;">
+                <strong>${newComment.author}</strong>
+              </div>
+              <div>${newComment.content}</div>
+              ${imagesHtml}
+              <small style="color:#ccc;float:right;">${newComment.createdAt.toLocaleString()}</small>
+            </div>
+          `;
+          
+          commentListElement.insertAdjacentHTML('afterbegin', newCommentHTML);
+        }
+      } catch (err) {
+        alert('评论发送失败，请重试');
+        console.error(err);
       }
     }
 
@@ -1192,33 +1826,43 @@
         // 如果评论区域是空的，动态渲染评论输入框和评论列表
         if (comments.innerHTML.trim() === '') {
           comments.innerHTML = `
-            <div class="comment-input">
-              <textarea id="comment-input-${postId}" placeholder="写下你的评论..." onclick="event.stopPropagation();" onfocus="event.stopPropagation();"></textarea>
-              <div style="position: relative; display: inline-block;">
-                <button class="emoji-btn" onclick="event.stopPropagation(); toggleEmojiPicker('${postId}')">😊</button>
-                <div class="emoji-picker" id="emoji-picker-${postId}">
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😊')">😊</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😂')">😂</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😍')">😍</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '🤔')">🤔</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '👍')">👍</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '❤️')">❤️</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '🎉')">🎉</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😢')">😢</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😆')">😆</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😘')">😘</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😁')">😁</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😉')">😉</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😎')">😎</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😴')">😴</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '😭')">😭</div>
-                  <div class="emoji-item" onclick="event.stopPropagation(); insertEmoji('${postId}', '🤣')">🤣</div>
-                </div>
+            <div class="comment-box">
+              <span class="id">评论回复</span>
+              <div class="comment-input-area">
+                <textarea class="comment-textarea" id="comment-input-${postId}" placeholder="写下你的评论..." onclick="event.stopPropagation();" onfocus="event.stopPropagation();"></textarea>
+                <div class="comment-preview-list" id="comment-preview-${postId}"></div>
               </div>
-              <button onclick="event.stopPropagation(); sendComment('${postId}')">发送</button>
+              
+              <div class="comment-footer">
+                <div class="comment-tools">
+                   <!-- 隐藏的文件输入 -->
+                  <input type="file" id="comment-image-${postId}" accept="image/*" multiple onchange="handleCommentImageSelect(event, '${postId}')" style="display:none">
+                  
+                  <button class="comment-tool-btn" onclick="document.getElementById('comment-image-${postId}').click()" title="添加图片">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                  </button>
+                  
+                  <button class="comment-tool-btn" onclick="event.stopPropagation(); toggleEmojiPicker('${postId}')" title="表情">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                  </button>
+                  
+                  ${generateEmojiPickerHTML(postId)}
+                </div>
+                
+                <button class="comment-send-btn" onclick="event.stopPropagation(); sendComment('${postId}')">发送</button>
+              </div>
             </div>
             <div id="comment-list-${postId}">加载中...</div>
           `;
+          
+          // 自动调整高度
+          /* 移除旧的 auto-resize 逻辑，因为现在有最小高度
+          const textarea = document.getElementById(`comment-input-${postId}`);
+          textarea.addEventListener('input', function() {
+            this.style.height = '24px';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+          });
+          */
         }
         
         // 加载评论列表
@@ -1240,23 +1884,125 @@
       return false;
     }
 
+    // 全局变量
+    let pendingImages = []; // 待上传的图片(Base64)
+
+    // 处理图片选择
+    async function handleImageSelect(event) {
+      const files = event.target.files;
+      if (!files.length) return;
+
+      if (pendingImages.length + files.length > 4) {
+        alert('最多只能上传 4 张图片');
+        event.target.value = ''; // 清空选择
+        return;
+      }
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+
+        try {
+          const compressedBase64 = await compressImage(file);
+          pendingImages.push(compressedBase64);
+        } catch (err) {
+          console.error('图片压缩失败:', err);
+          alert('某张图片处理失败，已跳过');
+        }
+      }
+
+      updatePreview();
+      event.target.value = ''; // 清空选择，允许重复选择同一张
+    }
+
+    // 图片压缩函数 (使用 Canvas)
+    function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = () => {
+            // 设置最大尺寸
+            const maxWidth = 1024;
+            const maxHeight = 1024;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width = Math.round((width * maxHeight) / height);
+                height = maxHeight;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // 压缩质量 0.7
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            resolve(dataUrl);
+          };
+          img.onerror = reject;
+        };
+        reader.onerror = reject;
+      });
+    }
+
+    // 更新预览区域
+    function updatePreview() {
+      const list = document.getElementById('previewList');
+      list.innerHTML = pendingImages.map((img, index) => `
+        <div class="preview-item">
+          <img src="${img}" class="preview-image">
+          <button class="remove-btn" onclick="removeImage(${index})">×</button>
+        </div>
+      `).join('');
+    }
+
+    // 移除待上传图片
+    function removeImage(index) {
+      pendingImages.splice(index, 1);
+      updatePreview();
+    }
+
     async function send(retryCount = 0) {
       const content = document.getElementById('content').value.trim();
-      if (!content) return alert('写点东西再发哦～');
+      if (!content && pendingImages.length === 0) return alert('写点东西或发张图吧～');
 
       if (retryCount > 1) {
         alert('发送失败，请尝试刷新页面');
         return;
       }
+      
+      const sendBtn = document.querySelector('.post-box button');
+      const originalText = sendBtn.innerHTML;
 
       try {
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '发送中...';
+
         const res = await fetch('/api/posts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
           },
-          body: JSON.stringify({ content, author: nickname, isAnonymous: false })
+          body: JSON.stringify({ 
+            content: content || '分享了一张图片', // 如果只有图片，自动补充文本
+            author: nickname, 
+            isAnonymous: false,
+            images: pendingImages 
+          })
         });
 
         const data = await res.json();
@@ -1283,11 +2029,17 @@
         }
 
         document.getElementById('content').value = '';
+        pendingImages = []; // 清空待上传图片
+        updatePreview(); // 清空预览
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalText;
         alert('发送成功！');
         loadPosts();
       } catch (err) {
         console.error('发送失败:', err);
         alert('发送失败: ' + err.message);
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalText;
       }
     }
 
@@ -1327,6 +2079,16 @@
     
     // 每30秒检查一次新帖子
     setInterval(checkForNewPosts, 30000);
+
+    // 注册 Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service Worker Registered'))
+          .catch(err => console.log('Service Worker Error', err));
+      });
+    }
   </script>
+  <script src="image-viewer.js"></script>
 </body>
 </html>

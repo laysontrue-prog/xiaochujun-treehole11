@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const CapsuleSchema = new mongoose.Schema({
   author: { type: String, required: true }, // 昵称
+  userId: { type: String, index: true }, // 关联用户ID
   content: { type: String, required: true },
   unlockDate: { type: Date, required: true }, // 解封时间
   createdAt: { type: Date, default: Date.now },
