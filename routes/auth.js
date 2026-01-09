@@ -247,6 +247,8 @@ router.post('/change-password', async (req, res) => {
   }
 });
 
+const { addExperience } = require('../utils/levelSystem');
+
 // 签到接口
 router.post('/checkin', async (req, res) => {
   try {
@@ -281,7 +283,7 @@ router.post('/checkin', async (req, res) => {
       user.consecutiveCheckIns = 1;
     }
 
-    // 计算经验值
+    // 计算基础经验值
     let expGain = 1;
     let bonusMsg = '';
     if (user.consecutiveCheckIns % 30 === 0) {
@@ -292,32 +294,19 @@ router.post('/checkin', async (req, res) => {
       bonusMsg = '连续签到7天奖励！';
     }
 
-    user.experience = (user.experience || 0) + expGain;
     user.lastCheckIn = new Date();
     user.checkInHistory.push(new Date());
-
-    // 简单的等级计算逻辑 (示例)
-    // Lv1-3: 0-7 exp
-    // Lv4-6: 8-30 exp
-    // Lv7-9: 31-90 exp
-    // Lv10: 91+ exp
-    const oldLevel = user.level || 1;
-    if (user.experience >= 91) user.level = 10;
-    else if (user.experience >= 31) user.level = Math.floor((user.experience - 31) / 20) + 7; // 7,8,9
-    else if (user.experience >= 8) user.level = Math.floor((user.experience - 8) / 8) + 4; // 4,5,6
-    else user.level = Math.floor(user.experience / 3) + 1; // 1,2,3
-    
-    // 限制最大等级10，最小等级1
-    user.level = Math.max(1, Math.min(10, user.level));
-
     await user.save();
+
+    // 使用新的等级系统添加经验
+    const result = await addExperience(user._id, expGain);
 
     res.json({
       message: `签到成功！经验+${expGain} ${bonusMsg}`,
-      level: user.level,
-      experience: user.experience,
+      level: result ? result.newLevel : user.level,
+      experience: result ? result.newExperience : user.experience,
       consecutiveCheckIns: user.consecutiveCheckIns,
-      levelUp: user.level > oldLevel
+      levelUp: result ? result.levelUp : false
     });
 
   } catch (err) {

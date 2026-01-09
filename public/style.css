@@ -213,23 +213,23 @@ body {
 .level-tag {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
-  color: white;
+  color: #4299e1;
+  background: white;
   margin-left: 8px;
   vertical-align: middle;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px #4299e1;
   white-space: nowrap;
 }
 
 .level-tag:hover {
   transform: scale(1.1) translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  background: #ebf8ff;
 }
 
 .level-tag:active {
@@ -237,37 +237,43 @@ body {
 }
 
 .level-tag span {
-  margin-right: 3px;
-  font-size: 12px;
+  display: none; /* Hide the icon for the clean style requested */
 }
 
-.lv-1, .lv-2, .lv-3 { 
-  background: linear-gradient(135deg, #a0aec0 0%, #718096 100%); 
-} /* Gray */
-
-.lv-4, .lv-5, .lv-6 { 
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); 
-} /* Green */
-
-.lv-7, .lv-8, .lv-9 { 
-  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); 
-} /* Blue */
-
+/* Specific level colors */
+.lv-1, .lv-2, .lv-3 { color: #a0aec0; box-shadow: 0 0 0 1px #a0aec0; } /* Gray - Novice */
+.lv-4, .lv-5, .lv-6 { color: #38a169; box-shadow: 0 0 0 1px #38a169; } /* Green - Advanced */
+.lv-7, .lv-8, .lv-9 { color: #3182ce; box-shadow: 0 0 0 1px #3182ce; } /* Blue - Expert */
 .lv-10 { 
-  background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%); 
-  box-shadow: 0 0 8px rgba(236, 201, 75, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-} /* Gold */
+  color: #d69e2e; 
+  box-shadow: 0 0 0 1px #d69e2e; 
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 248, 225, 0.8) 100%);
+} /* Gold - Master */
+
+/* Dark Mode Colors */
+@media (prefers-color-scheme: dark) {
+  .lv-1, .lv-2, .lv-3 { color: #cbd5e0; box-shadow: 0 0 0 1px #cbd5e0; }
+  .lv-4, .lv-5, .lv-6 { color: #68d391; box-shadow: 0 0 0 1px #68d391; }
+  .lv-7, .lv-8, .lv-9 { color: #63b3ed; box-shadow: 0 0 0 1px #63b3ed; }
+  .lv-10 { color: #faf089; box-shadow: 0 0 0 1px #faf089; background: none; }
+}
 
 /* Mobile Optimization for Level Tags */
 @media (max-width: 768px) {
   .level-tag {
-    padding: 1px 6px;
+    padding: 0 4px;
     font-size: 10px;
     margin-left: 6px;
   }
-  .level-tag span {
-    font-size: 10px;
+}
+
+/* Dark Mode Support for Level Tags */
+@media (prefers-color-scheme: dark) {
+  .level-tag {
+    background: transparent;
+  }
+  .level-tag:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -571,6 +577,20 @@ body {
   0% { opacity: 0.6; background-color: #edf2f7; }
   50% { opacity: 1; background-color: #e2e8f0; }
   100% { opacity: 0.6; background-color: #edf2f7; }
+}
+
+/* Post Author Row Layout */
+.post-author-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.post-author-row .time {
+  font-size: 12px;
+  color: #a0aec0;
+  white-space: nowrap;
 }
 
 /* Post/Comment Author Area Adjustment */

@@ -9,6 +9,7 @@ const auth = require('../middleware/auth');
 const apicache = require('apicache');
 const cache = apicache.middleware;
 const { uploadImage } = require('../utils/imageHandler');
+const { addExperience } = require('../utils/levelSystem');
 
 // 获取所有话题列表（支持分页）
 // 性能优化：对于频繁变动的内容，移除 API 级别长时间缓存，确保数据实时性
@@ -98,16 +99,25 @@ router.get('/:id', async (req, res) => {
   const paginatedReplies = allReplies.slice(skipIndex, skipIndex + limit);
   
   // 6. 同步用户信息 (仅针对当前页的数据)
-  const userIds = paginatedReplies.map(r => r.userId).filter(id => id);
+  // 获取所有非匿名回复的 userId (包括可能被保存为字符串的旧数据，尝试转换)
+  const userIds = paginatedReplies
+    .filter(r => !r.isAnonymous && r.userId)
+    .map(r => r.userId.toString()); // 确保转为字符串
+    
   if (userIds.length > 0) {
-    const users = await User.find({ _id: { $in: userIds } }, 'avatar nickname');
+    // 去重
+    const uniqueUserIds = [...new Set(userIds)];
+    const users = await User.find({ _id: { $in: uniqueUserIds } }, 'avatar nickname level');
     const userMap = {};
     users.forEach(u => userMap[u._id.toString()] = u);
     
     paginatedReplies.forEach(r => {
-      if (r.userId && userMap[r.userId.toString()] && !r.isAnonymous) {
-        r.avatar = userMap[r.userId.toString()].avatar || r.avatar;
-        r.author = userMap[r.userId.toString()].nickname || r.author;
+      // 只有非匿名且有 userId 的才同步
+      if (!r.isAnonymous && r.userId && userMap[r.userId.toString()]) {
+        const user = userMap[r.userId.toString()];
+        r.avatar = user.avatar || r.avatar;
+        r.author = user.nickname || r.author;
+        r.authorLevel = user.level || 1; // 确保附加 level
       }
     });
   }
@@ -168,6 +178,12 @@ router.post('/:id/reply', auth, async (req, res) => {
   });
   await topic.save();
   console.log(`[Topic] Reply added to ${topic._id} by ${author}`);
+  
+  // 增加经验值 (话题回复 +5)
+  if (!isAnonymous && userId) {
+    addExperience(userId, 5);
+  }
+
   res.json({ message: '回复成功' });
 });
 

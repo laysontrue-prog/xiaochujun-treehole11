@@ -14,6 +14,7 @@ const dbReady = require('../middleware/dbReady'); // 数据库连接检查
 const jwt = require('jsonwebtoken');
 const notificationService = require('../utils/notificationService'); // 引入通知服务
 const { uploadImage } = require('../utils/imageHandler'); // 引入图片处理工具
+const { addExperience } = require('../utils/levelSystem'); // 引入等级系统
 
 // 首页获取已通过的帖子（支持分页）
 // 性能优化：移除长时间缓存，确保发帖后立即可见
@@ -23,7 +24,7 @@ router.get('/', dbReady, async (req, res) => {
   const skip = (page - 1) * limit;
   
   // 获取帖子列表
-  const posts = await Post.find({ status: 'approved' })
+  const posts = await Post.find({ status: 'approved', hasSensitive: { $ne: true } })
     .populate('userId', 'avatar level nickname') // 关键：关联用户信息
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -134,7 +135,26 @@ router.post('/', auth, async (req, res) => {
     // 2. 处理 @提及
     notificationService.handleMentions(content, post._id, req.user.userId, author, 'post');
 
-    res.json({ message: '发布成功', post });
+    // 3. 增加经验值 (发帖 +10)
+    let newLevel = undefined;
+    if (!isAnonymous && req.user.userId) {
+      const result = await addExperience(req.user.userId, 10);
+      if (result) {
+        newLevel = result.newLevel;
+      } else {
+        // 如果没有升级或出错，获取当前等级
+        const user = await User.findById(req.user.userId);
+        if (user) newLevel = user.level;
+      }
+    }
+
+    // 构造返回对象，包含 authorLevel
+    const postObj = post.toObject();
+    if (!isAnonymous && newLevel) {
+      postObj.authorLevel = newLevel;
+    }
+
+    res.json({ message: '发布成功', post: postObj });
   } catch (error) {
     console.error('发布树洞失败:', error);
     res.status(500).json({ message: '发布失败，服务器内部错误' });
@@ -163,8 +183,20 @@ router.get('/admin/list', async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate);
     }
 
-    const posts = await Post.find(query).sort({ createdAt: -1 });
-    res.json(posts);
+    const posts = await Post.find(query)
+      .populate('userId', 'level nickname')
+      .sort({ createdAt: -1 });
+      
+    // 处理返回数据，将level提升到顶层以便前端使用
+    const processedPosts = posts.map(p => {
+      const obj = p.toObject();
+      if (obj.userId && obj.userId.level) {
+        obj.authorLevel = obj.userId.level;
+      }
+      return obj;
+    });
+
+    res.json(processedPosts);
   } catch (error) {
     console.error('获取管理列表失败:', error);
     res.status(500).json({ message: '获取列表失败' });

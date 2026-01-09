@@ -771,7 +771,7 @@
       const levelEl = document.getElementById('currentLevel');
       if (levelEl) {
         levelEl.className = `level-tag ${getLevelClass(level)}`;
-        levelEl.innerHTML = `<span>🏅</span>Lv.${level}`;
+        levelEl.innerHTML = `Lv.${level}`;
         levelEl.style.display = 'inline-flex';
         levelEl.title = '点击查看等级详情';
         levelEl.onclick = () => showLevelDetails(level);
@@ -796,9 +796,9 @@
     const urlParams = new URLSearchParams(window.location.search);
     const topicId = urlParams.get('id');
 
-    // 获取等级样式类
+    // 获取等级样式类 (确保逻辑覆盖全面)
     function getLevelClass(level) {
-      if (!level) return 'lv-1';
+      if (!level || level < 1) return 'lv-1';
       if (level >= 10) return 'lv-10';
       if (level >= 7) return 'lv-7';
       if (level >= 4) return 'lv-4';
@@ -1090,7 +1090,7 @@
         list.innerHTML = topic.replies.map(r => {
            let levelTag = '';
            if (r.authorLevel) {
-             levelTag = `<span class="level-tag ${getLevelClass(r.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${r.authorLevel})" title="点击查看等级详情"><span>🏅</span>Lv.${r.authorLevel}</span>`;
+             levelTag = `<span class="level-tag ${getLevelClass(r.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${r.authorLevel})" title="点击查看等级详情">Lv.${r.authorLevel}</span>`;
            }
 
            let imagesHtml = '';
@@ -1106,9 +1106,12 @@
           <div class="post-card" onclick="toggleComments('${r._id}')">
             <p>${r.content.replace(/\n/g,'<br>')}</p>
             ${imagesHtml}
-            <div>
-              <img class="avatar" src="${r.isAnonymous ? 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous' : (r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.author}`)}" alt="${r.author}" onerror="this.src='https://placehold.co/100x100?text=Avatar'" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-right:5px;">
-              <span class="author" style="vertical-align:middle;">${r.author}${levelTag}</span>
+            <div class="post-author-row">
+              <div class="author-info">
+                <img class="user-avatar" src="${r.isAnonymous ? 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous' : (r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.author}`)}" alt="${r.author}" onerror="this.src='https://placehold.co/100x100?text=Avatar'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;">
+                <span class="author">${r.author}</span>
+                ${levelTag}
+              </div>
               <span class="time">${new Date(r.createdAt).toLocaleString()}</span>
             </div>
             <div class="actions">
@@ -1259,7 +1262,7 @@
           list.innerHTML = comments.map(c => {
              let levelTag = '';
              if (c.authorLevel) {
-               levelTag = `<span class="level-tag ${getLevelClass(c.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${c.authorLevel})" title="点击查看等级详情"><span>🏅</span>Lv.${c.authorLevel}</span>`;
+               levelTag = `<span class="level-tag ${getLevelClass(c.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${c.authorLevel})" title="点击查看等级详情">Lv.${c.authorLevel}</span>`;
              }
              let imagesHtml = '';
              if (c.images && c.images.length > 0) {
@@ -1273,7 +1276,7 @@
             <div class="comment-item">
               <div class="author-area">
                 <img class="user-avatar" src="${c.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}`}" alt="avatar" style="width:20px;height:20px;margin-right:5px;">
-                <strong>${c.author}</strong>
+                <span style="font-weight: 500; color: #2d3748;">${c.author}</span>
                 ${levelTag}
               </div>
               <div>${c.content}</div>

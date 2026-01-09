@@ -180,10 +180,15 @@
       margin-top: 10px;
     }
 
+    .post-card .author-info {
+      display: inline-flex;
+      align-items: center;
+    }
+    
     .post-card .author {
       color: #2d3748; /* 主文本颜色 */
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 500;
     }
     
     .post-card .time {
@@ -1079,7 +1084,7 @@
       const levelEl = document.getElementById('currentLevel');
       if (levelEl) {
         levelEl.className = `level-tag ${getLevelClass(level)}`;
-        levelEl.innerHTML = `<span>🏅</span>Lv.${level}`;
+        levelEl.innerHTML = `Lv.${level}`;
         levelEl.style.display = 'inline-flex';
         levelEl.title = '点击查看等级详情';
         levelEl.onclick = () => showLevelDetails(level);
@@ -1155,7 +1160,7 @@
 
     // 获取等级样式类
     function getLevelClass(level) {
-      if (!level) return 'lv-1';
+      if (!level || level < 1) return 'lv-1';
       if (level >= 10) return 'lv-10';
       if (level >= 7) return 'lv-7';
       if (level >= 4) return 'lv-4';
@@ -1331,7 +1336,7 @@
         list.innerHTML = posts.map(p => {
           let levelTag = '';
           if (p.authorLevel) {
-            levelTag = `<span class="level-tag ${getLevelClass(p.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${p.authorLevel})" title="点击查看等级详情"><span>🏅</span>Lv.${p.authorLevel}</span>`;
+            levelTag = `<span class="level-tag ${getLevelClass(p.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${p.authorLevel})" title="点击查看等级详情">Lv.${p.authorLevel}</span>`;
           }
           
           // 图片区域HTML
@@ -1576,7 +1581,7 @@
           list.innerHTML = comments.map(c => {
             let levelTag = '';
             if (c.authorLevel) {
-              levelTag = `<span class="level-tag ${getLevelClass(c.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${c.authorLevel})" title="点击查看等级详情"><span>🏅</span>Lv.${c.authorLevel}</span>`;
+              levelTag = `<span class="level-tag ${getLevelClass(c.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${c.authorLevel})" title="点击查看等级详情">Lv.${c.authorLevel}</span>`;
             }
             let imagesHtml = '';
           if (c.images && c.images.length > 0) {
@@ -1590,7 +1595,7 @@
             <div class="comment-item">
               <div class="author-area">
                 <img class="user-avatar" src="${c.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}`}" alt="avatar" style="width:20px;height:20px;margin-right:5px;border-radius:50%;object-fit:cover;vertical-align:middle;">
-                <strong>${c.author}</strong>
+                <span style="font-weight: 500; color: #2d3748;">${c.author}</span>
                 ${levelTag}: ${c.content}
               </div>
               ${imagesHtml}

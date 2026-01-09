@@ -5,6 +5,7 @@ const Post = require('../models/Post');
 const Notification = require('../models/Notification');
 const notificationService = require('../utils/notificationService'); // 引入通知服务
 const { uploadImage } = require('../utils/imageHandler');
+const { addExperience } = require('../utils/levelSystem');
 
 const sensitiveFilter = require('../utils/sensitiveFilter'); 
 const auth = require('../middleware/auth');
@@ -79,6 +80,11 @@ router.post('/post', auth, async (req, res) => {
   const senderId = req.user ? req.user.userId : null;
   notificationService.handleMentions(content, postId, senderId, author, 'reply');
   
+  // 增加经验值 (评论 +5)
+  if (!isAnonymous && userId) {
+    addExperience(userId, 5);
+  }
+
   res.json(comment);
 });
 
@@ -116,6 +122,11 @@ router.post('/topic-reply', auth, async (req, res) => {
   await comment.save();
   console.log(`[Comment] Added to topic-reply ${topicReplyId} by ${author}`);
   
+  // 增加经验值 (话题回复 +5)
+  if (!isAnonymous && userId) {
+    addExperience(userId, 5);
+  }
+
   // 这里可以添加话题回复的通知逻辑
   // 由于话题回复没有独立的ID和作者信息，暂时简化处理
   

@@ -5,6 +5,7 @@ const ReplySchema = new mongoose.Schema({
   images: [{ type: String }], // 支持图片
   author: { type: String, default: '匿名' },
   avatar: { type: String }, // 添加作者头像字段
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // 关联用户ID
   isAnonymous: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected'] } // 审核状态

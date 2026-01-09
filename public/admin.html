@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>老师审核区</title>
+  <link rel="stylesheet" href="style.css">
   <style>
     /* 全局样式重置与基础设置 */
     * {
@@ -476,6 +477,15 @@
       }, 5000);
     }
 
+    // 获取等级样式类 (复用)
+    function getLevelClass(level) {
+      if (!level) return 'lv-1';
+      if (level >= 10) return 'lv-10';
+      if (level >= 7) return 'lv-7';
+      if (level >= 4) return 'lv-4';
+      return 'lv-1';
+    }
+
     // 统一加载帖子列表（带筛选）
     async function loadPosts() {
       const container = document.getElementById('posts-list');
@@ -503,13 +513,16 @@
           const sensitiveMark = p.hasSensitive ? 
             `<span style="color:red;border:1px solid red;padding:2px 5px;border-radius:4px;font-size:12px;margin-left:5px;">含敏感词</span>` : '';
           
+          const levelBadge = p.authorLevel ? 
+            `<span class="level-tag ${getLevelClass(p.authorLevel)}" title="点击查看等级详情">Lv.${p.authorLevel}</span>` : '';
+
           return `
           <div class="post-card" style="${p.hasSensitive ? 'border: 2px solid #ff6b6b;' : ''}">
             ${p.hasSensitive ? '<div class="notification-badge" style="top:-10px;right:-10px;">!</div>' : ''}
             <div class="info">
               <p>${p.content.replace(/\n/g,'<br>')}</p>
               <small>
-                ${new Date(p.createdAt).toLocaleString()} —— ${p.author}
+                ${new Date(p.createdAt).toLocaleString()} —— ${p.author} ${levelBadge}
                 ${sensitiveMark}
               </small>
             </div>
