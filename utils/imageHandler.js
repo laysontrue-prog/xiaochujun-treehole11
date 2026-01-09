@@ -49,9 +49,9 @@ async function uploadImage(base64Image) {
 
   // 4. 兜底方案：直接存 Base64
   // 安全检查：如果图片太大且没法上传图床，为了保护数据库，我们要拒绝或截断
-  // 这里我们设定一个硬阈值：200KB (MongoDB 文档最大 16MB，但多了会慢)
-  if (sizeInKB > 300) {
-    throw new Error('图片过大且图床不可用，请压缩至 300KB 以下');
+  // 这里我们设定一个硬阈值：800KB (MongoDB 文档最大 16MB，但多了会慢)
+  if (sizeInKB > 800) {
+    throw new Error('图片过大且图床不可用，请压缩至 800KB 以下');
   }
 
   return base64Image;

@@ -173,17 +173,25 @@
       word-wrap: break-word;
     }
     
+    .post-card .post-author-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
     .post-card .author {
-      color: #718096;
+      color: #2d3748; /* 主文本颜色 */
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
     }
     
     .post-card .time {
-      float: right;
-      color: #a0aec0;
+      color: #a0aec0; /* 辅助文本颜色 */
       font-size: 12px;
       font-weight: 500;
+      white-space: nowrap; /* 防止时间换行 */
+      margin-left: 10px; /* 最小间距 */
     }
     
     /* 微信风格的点赞评论样式 */
@@ -357,42 +365,8 @@
     }
 
     /* 表情选择器 */
-    .emoji-picker {
-      position: absolute;
-      bottom: 70px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 15px;
-      padding: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 12px;
-      z-index: 100;
-      display: none;
-    }
-    
-    .emoji-picker.show {
-      display: grid;
-    }
-    
-    .emoji-item {
-      font-size: 22px;
-      cursor: pointer;
-      padding: 8px;
-      border-radius: 8px;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
-    
-    .emoji-item:hover {
-      background: #f0f4f8;
-      transform: scale(1.2);
-    }
-    
+    /* 旧样式已删除，统一使用下方的优化样式 */
+
     /* 评论输入样式 */
     .post-card .comment-input {
       display: flex;
@@ -689,22 +663,39 @@
       box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
     }
 
-    /* 表情选择器优化 */
+    /* 表情选择器优化 - 修复被遮挡问题 */
     .emoji-picker, .emoji-picker-popover {
       position: absolute;
-      bottom: 45px;
+      /* 动态计算位置，默认为上方弹出 */
+      bottom: 100%; 
       left: 0;
       background: white;
       border: 1px solid #ddd;
       border-radius: 8px;
       padding: 0;
       display: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); /* 加深阴影 */
+      z-index: 99999 !important; /* 确保最高层级 */
       width: 320px;
-      height: 280px; /* 固定高度 */
+      height: 280px;
       flex-direction: column;
       overflow: hidden;
+      margin-bottom: 10px; /* 与触发按钮的间距 */
+    }
+
+    /* 评论区中的表情选择器需要向左对齐，防止右侧溢出 */
+    .comment-input .emoji-picker {
+      left: auto;
+      right: 0;
+    }
+
+    /* 移动端适配：如果屏幕太小，尝试居中显示 */
+    @media (max-width: 480px) {
+      .emoji-picker, .emoji-picker-popover {
+        width: 300px; /* 稍微缩小宽度 */
+        left: 50%;
+        transform: translateX(-50%);
+      }
     }
 
     .emoji-picker.show, .emoji-picker-popover.show {
@@ -924,27 +915,9 @@
       padding: 0;
     }
 
-    /* 通用表情选择器样式 */
-    .emoji-picker-popover {
-      position: absolute;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-      border: 1px solid #eee;
-      width: 300px;
-      z-index: 1000;
-      display: none;
-      padding: 10px;
-    }
-    
-    .emoji-picker-popover.show {
-      display: block;
-      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.95) translateY(10px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
+    /* 表情选择器层级修复 */
+    .emoji-picker, .emoji-picker-popover {
+      z-index: 9999 !important;
     }
   </style>
 </head>
@@ -970,7 +943,7 @@
     <p class="subtitle">在大树下，自由地呼吸，自由地表达。</p>
 
     <div class="post-box">
-      <span class="id">当前身份：<span id="currentId">加载中...</span></span>
+      <span class="id">当前身份：<span id="currentId">加载中...</span><span id="currentLevel" style="display:none"></span></span>
       <textarea id="content" placeholder="今天有什么想对树洞说的吗？..."></textarea>
       
       <!-- 图片预览区域 -->
@@ -1054,6 +1027,12 @@
       document.getElementById('currentId').textContent = nickname;
     }
 
+    // 从本地缓存加载等级
+    const savedLevel = localStorage.getItem('level');
+    if (savedLevel) {
+      updateLevelDisplay(savedLevel);
+    }
+
     // 初始化头像显示
     function initAvatar() {
       const avatarImg = document.getElementById('navAvatar');
@@ -1086,10 +1065,31 @@
             document.getElementById('currentId').textContent = data.nickname;
           }
         }
+        // 更新等级
+        if (data.level) {
+          localStorage.setItem('level', data.level);
+          updateLevelDisplay(data.level);
+        }
       })
       .catch(err => console.error('Failed to fetch user info', err));
     }
     
+    // 更新等级显示
+    function updateLevelDisplay(level) {
+      const levelEl = document.getElementById('currentLevel');
+      if (levelEl) {
+        levelEl.className = `level-tag ${getLevelClass(level)}`;
+        levelEl.innerHTML = `<span>🏅</span>Lv.${level}`;
+        levelEl.style.display = 'inline-flex';
+        levelEl.title = '点击查看等级详情';
+        levelEl.onclick = () => showLevelDetails(level);
+      }
+    }
+
+    function showLevelDetails(level) {
+      alert(`【我的等级】\n当前等级：Lv.${level}\n\n多发帖、多互动、每日签到可以获取经验值升级哦！`);
+    }
+
     initAvatar();
 
     function logout() {
@@ -1155,6 +1155,7 @@
 
     // 获取等级样式类
     function getLevelClass(level) {
+      if (!level) return 'lv-1';
       if (level >= 10) return 'lv-10';
       if (level >= 7) return 'lv-7';
       if (level >= 4) return 'lv-4';
@@ -1288,42 +1289,31 @@
       
       picker.classList.toggle('show');
       
-      // 动态调整 z-index，防止被下方帖子遮挡
+      // 关键修复：当表情框显示时，强制提升当前帖子卡片的层级，防止被下方帖子遮挡
       if (postCard) {
-        postCard.style.zIndex = picker.classList.contains('show') ? '100' : '';
+        if (picker.classList.contains('show')) {
+          postCard.style.zIndex = '10000';
+          postCard.style.position = 'relative'; // 确保z-index生效
+        } else {
+          // 延迟恢复 z-index，避免动画过程中的闪烁
+          setTimeout(() => {
+            if (!picker.classList.contains('show')) {
+              postCard.style.zIndex = '';
+            }
+          }, 300);
+        }
       }
     }
 
-    // 覆盖 toggleComments 中的 HTML 生成逻辑
-    function toggleComments(postId) {
-      const comments = document.getElementById('comments-' + postId);
-      comments.classList.toggle('show');
-      
-      if (comments.classList.contains('show')) {
-        if (comments.innerHTML.trim() === '') {
-          // 动态生成包含完整表情列表的HTML
-          comments.innerHTML = `
-            <div class="comment-input">
-              <textarea id="comment-input-${postId}" placeholder="写下你的评论..." onclick="event.stopPropagation();" onfocus="event.stopPropagation();"></textarea>
-              <div style="position: relative; display: inline-block;">
-                <button class="emoji-btn" style="border:none;background:none;font-size:24px;cursor:pointer;" onclick="event.stopPropagation(); toggleEmojiPicker('${postId}')">😊</button>
-                ${generateEmojiPickerHTML(postId)}
-              </div>
-              <button onclick="event.stopPropagation(); sendComment('${postId}')">发送</button>
-            </div>
-            <div id="comment-list-${postId}">加载中...</div>
-          `;
-        }
-        loadComments(postId);
-      }
-    }
+
 
     let currentPage = 1;
     let totalPages = 1;
 
     async function loadPosts(page = 1) {
       try {
-        const res = await fetch(`/api/posts?page=${page}&limit=10`);
+        // 添加时间戳防止缓存，确保发帖后立即可见
+        const res = await fetch(`/api/posts?page=${page}&limit=10&_t=${new Date().getTime()}`);
         const response = await res.json();
         const posts = response.posts;
         const list = document.getElementById('posts-list');
@@ -1341,7 +1331,7 @@
         list.innerHTML = posts.map(p => {
           let levelTag = '';
           if (p.authorLevel) {
-            levelTag = `<span class="level-tag ${getLevelClass(p.authorLevel)}">Lv.${p.authorLevel}</span>`;
+            levelTag = `<span class="level-tag ${getLevelClass(p.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${p.authorLevel})" title="点击查看等级详情"><span>🏅</span>Lv.${p.authorLevel}</span>`;
           }
           
           // 图片区域HTML
@@ -1358,9 +1348,12 @@
           <div class="post-card" onclick="toggleComments('${p._id}')">
             <p>${p.content.replace(/\n/g,'<br>')}</p>
             ${imagesHtml}
-            <div class="author-area">
-              <img class="user-avatar" src="${p.isAnonymous ? 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous' : (p.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author}`)}" alt="avatar" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=fallback'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;">
-              <span class="author">— ${p.author}${levelTag}</span>
+            <div class="post-author-row">
+              <div class="author-info">
+                <img class="user-avatar" src="${p.isAnonymous ? 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous' : (p.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author}`)}" alt="avatar" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=fallback'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;">
+                <span class="author">${p.author}</span>
+                ${levelTag}
+              </div>
               <span class="time">${new Date(p.createdAt).toLocaleString()}</span>
             </div>
             <div class="actions">
@@ -1581,6 +1574,10 @@
           list.innerHTML = '<p style="color:#999;padding:10px;">暂无评论，来抢沙发～</p>';
         } else {
           list.innerHTML = comments.map(c => {
+            let levelTag = '';
+            if (c.authorLevel) {
+              levelTag = `<span class="level-tag ${getLevelClass(c.authorLevel)}" onclick="event.stopPropagation(); showLevelDetails(${c.authorLevel})" title="点击查看等级详情"><span>🏅</span>Lv.${c.authorLevel}</span>`;
+            }
             let imagesHtml = '';
           if (c.images && c.images.length > 0) {
             imagesHtml = `
@@ -1593,7 +1590,8 @@
             <div class="comment-item">
               <div class="author-area">
                 <img class="user-avatar" src="${c.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}`}" alt="avatar" style="width:20px;height:20px;margin-right:5px;border-radius:50%;object-fit:cover;vertical-align:middle;">
-                <strong>${c.author}</strong>: ${c.content}
+                <strong>${c.author}</strong>
+                ${levelTag}: ${c.content}
               </div>
               ${imagesHtml}
               <small style="color:#ccc;float:right;">${new Date(c.createdAt).toLocaleString()}</small>
@@ -1605,11 +1603,7 @@
       }
     }
 
-    // 切换表情选择器
-    function toggleEmojiPicker(postId) {
-      const picker = document.getElementById('emoji-picker-' + postId);
-      picker.classList.toggle('show');
-    }
+
 
     // 插入表情到评论框
     function insertEmoji(postId, emoji) {
@@ -1749,7 +1743,7 @@
       
       if (!content && images.length === 0) return alert('写点评论或发张图再发哦～');
 
-      // 创建评论对象
+      // 创建评论对象 (仅用于乐观UI更新，实际数据以服务器返回为准)
       const newComment = {
         author: nickname,
         content: content || '分享了一张图片',
@@ -1761,11 +1755,23 @@
         // 发送评论到服务器
         const res = await fetch('/api/comments/post', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}` // 添加 Token
+          },
           body: JSON.stringify({ postId, content: newComment.content, author: nickname, images })
         });
         
-        if (!res.ok) throw new Error('发送失败');
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 401) {
+             alert('登录已过期，请重新登录');
+             logout();
+             return;
+          }
+          throw new Error(data.message || '发送失败');
+        }
 
         // 清空输入框和图片
         input.value = '';
@@ -1781,38 +1787,11 @@
           commentCountElement.textContent = currentCounts.commentCount;
         }
         
-        // 立即将新评论添加到DOM中
-        const commentListElement = document.getElementById('comment-list-' + postId);
-        if (commentListElement) {
-          if (commentListElement.innerHTML.includes('暂无评论')) {
-            commentListElement.innerHTML = '';
-          }
-          
-          let imagesHtml = '';
-          if (images.length > 0) {
-            imagesHtml = `
-              <div class="post-images" style="margin-top:8px;">
-                ${images.map(img => `<img src="${img}" class="post-image" onclick="window.open('${img}', '_blank')" style="width:80px;height:80px;">`).join('')}
-              </div>
-            `;
-          }
-          
-          const newCommentHTML = `
-            <div class="comment-item">
-              <div class="author-area">
-                <img class="user-avatar" src="${localStorage.getItem('avatar') || `https://api.dicebear.com/7.x/avataaars/svg?seed=${newComment.author}`}" alt="avatar" style="width:20px;height:20px;margin-right:5px;">
-                <strong>${newComment.author}</strong>
-              </div>
-              <div>${newComment.content}</div>
-              ${imagesHtml}
-              <small style="color:#ccc;float:right;">${newComment.createdAt.toLocaleString()}</small>
-            </div>
-          `;
-          
-          commentListElement.insertAdjacentHTML('afterbegin', newCommentHTML);
-        }
+        // 重新加载评论列表以显示最新数据 (包含头像等完整信息)
+        loadComments(postId);
+
       } catch (err) {
-        alert('评论发送失败，请重试');
+        alert('评论发送失败: ' + err.message);
         console.error(err);
       }
     }
@@ -1980,16 +1959,21 @@
       if (!content && pendingImages.length === 0) return alert('写点东西或发张图吧～');
 
       if (retryCount > 1) {
-        alert('发送失败，请尝试刷新页面');
+        alert('网络不稳定，发送失败，请稍后再试');
+        const sendBtn = document.querySelector('.post-box .send-btn');
+        if (sendBtn) {
+           sendBtn.disabled = false;
+           sendBtn.innerHTML = '发送';
+        }
         return;
       }
       
-      const sendBtn = document.querySelector('.post-box button');
-      const originalText = sendBtn.innerHTML;
+      const sendBtn = document.querySelector('.post-box .send-btn');
+      const originalText = '发送'; // 硬编码原始文本，防止被覆盖
 
       try {
         sendBtn.disabled = true;
-        sendBtn.innerHTML = '发送中...';
+        sendBtn.innerHTML = '⏳ 发送中...';
 
         const res = await fetch('/api/posts', {
           method: 'POST',
@@ -1998,7 +1982,7 @@
             'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
           },
           body: JSON.stringify({ 
-            content: content || '分享了一张图片', // 如果只有图片，自动补充文本
+            content: content || '分享了一张图片', 
             author: nickname, 
             isAnonymous: false,
             images: pendingImages 
@@ -2008,10 +1992,7 @@
         const data = await res.json();
 
         if (!res.ok) {
-          // 处理Token无效的情况
           if (res.status === 401) {
-            // 如果是访客，自动刷新Token并重试
-            // 只要昵称包含"访客"或者是"访客"，都认为是访客
             if (nickname === '访客' || nickname.startsWith('访客') || localStorage.getItem('nickname')?.startsWith('访客')) {
               console.log('访客Token无效，尝试刷新...');
               const refreshed = await refreshGuestToken();
@@ -2019,7 +2000,6 @@
                 return send(retryCount + 1);
               }
             } else {
-              // 如果是注册用户，提示登录过期
               alert('登录已过期，请重新登录');
               logout();
               return;
@@ -2029,12 +2009,19 @@
         }
 
         document.getElementById('content').value = '';
-        pendingImages = []; // 清空待上传图片
-        updatePreview(); // 清空预览
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = originalText;
-        alert('发送成功！');
-        loadPosts();
+        pendingImages = []; 
+        updatePreview(); 
+        
+        sendBtn.innerHTML = '✅ 发送成功';
+        
+        // 立即刷新列表
+        loadPosts(1);
+        
+        setTimeout(() => {
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = originalText;
+        }, 1500);
+
       } catch (err) {
         console.error('发送失败:', err);
         alert('发送失败: ' + err.message);

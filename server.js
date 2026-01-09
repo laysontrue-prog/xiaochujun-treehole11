@@ -25,7 +25,8 @@ notificationService.init(io);
 app.use(compression());
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // 增加请求体大小限制，防止图片上传报错
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // 性能优化：静态资源长期缓存 (1年)
 app.use(express.static('public', {
@@ -66,7 +67,30 @@ const connectDB = async () => {
       res.sendFile(path.join(__dirname, 'public', 'admin.html'));
     });
 
-    // 兜底路由
+    // API 404 处理 (防止 API 404 返回 HTML 导致前端解析错误)
+    // 匹配所有以 /api 开头的未处理请求 (Express 5 使用前缀匹配)
+    app.use('/api', (req, res) => {
+      res.status(404).json({ message: 'API路由不存在' });
+    });
+
+    // 全局错误处理中间件
+    app.use((err, req, res, next) => {
+      console.error('🔥 Server Error:', err);
+      
+      // 处理请求体过大错误
+      if (err.type === 'entity.too.large') {
+        return res.status(413).json({ message: '上传内容过大，请压缩图片或减少数量' });
+      }
+
+      // JSON解析错误
+      if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({ message: '无效的 JSON 格式' });
+      }
+
+      res.status(500).json({ message: '服务器内部错误', error: err.message });
+    });
+
+    // 兜底路由 (前端页面)
     app.use((req, res) => {
       res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });

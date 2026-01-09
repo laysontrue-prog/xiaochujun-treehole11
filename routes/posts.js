@@ -16,8 +16,8 @@ const notificationService = require('../utils/notificationService'); // 引入�
 const { uploadImage } = require('../utils/imageHandler'); // 引入图片处理工具
 
 // 首页获取已通过的帖子（支持分页）
-// 性能优化：缓存高频查询接口 (30秒)
-router.get('/', dbReady, cache('30 seconds'), async (req, res) => {
+// 性能优化：移除长时间缓存，确保发帖后立即可见
+router.get('/', dbReady, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;

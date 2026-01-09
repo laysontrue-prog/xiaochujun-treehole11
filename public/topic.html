@@ -210,33 +210,26 @@
       list.innerHTML = '<p style="text-align:center;color:#80cbc4;">正在加载话题...</p>';
       
       try {
-        // 如果还没有加载过话题，先获取所有话题
-        if (allTopics.length === 0) {
-          const res = await fetch('/api/topics');
-          if (!res.ok) {
-            throw new Error('网络请求失败');
-          }
-          const responseData = await res.json();
-          
-          // 安全地处理响应数据
-          if (!responseData) {
-            throw new Error('无效的响应数据');
-          }
-          
-          allTopics = responseData.topics || [];
-          totalTopics = allTopics.length;
+        // 直接从服务器获取指定页的数据
+        const res = await fetch(`/api/topics?page=${page}&limit=${topicsPerPage}`);
+        if (!res.ok) {
+          throw new Error('网络请求失败');
         }
-
-        // 计算分页
+        const responseData = await res.json();
+        
+        // 安全地处理响应数据
+        if (!responseData) {
+          throw new Error('无效的响应数据');
+        }
+        
+        const topics = responseData.topics || [];
+        totalTopics = responseData.totalItems || 0;
         currentPage = page;
-        const startIndex = (currentPage - 1) * topicsPerPage;
-        const endIndex = startIndex + topicsPerPage;
-        const paginatedTopics = allTopics.slice(startIndex, endIndex);
 
-        if (paginatedTopics.length === 0) {
+        if (topics.length === 0) {
           list.innerHTML = '<p style="text-align:center;color:#999;">暂无话题，敬请期待...</p>';
         } else {
-          list.innerHTML = paginatedTopics.map(t => `
+          list.innerHTML = topics.map(t => `
             <div class="topic-card" onclick="location.href='/topic-detail.html?id=${t._id}'">
               <div class="left">
                 <div class="icon">${t.icon || '💬'}</div>

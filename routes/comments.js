@@ -114,6 +114,7 @@ router.post('/topic-reply', auth, async (req, res) => {
     images: processedImages 
   });
   await comment.save();
+  console.log(`[Comment] Added to topic-reply ${topicReplyId} by ${author}`);
   
   // 这里可以添加话题回复的通知逻辑
   // 由于话题回复没有独立的ID和作者信息，暂时简化处理
@@ -132,6 +133,7 @@ router.get('/post/:postId', async (req, res) => {
     if (obj.userId) {
       obj.authorAvatar = obj.userId.avatar || obj.authorAvatar;
       obj.author = obj.userId.nickname || obj.author;
+      obj.authorLevel = obj.userId.level || 1;
       obj.userId = obj.userId._id;
     }
     return obj;
@@ -150,6 +152,7 @@ router.get('/topic-reply/:topicReplyId', async (req, res) => {
     if (obj.userId) {
       obj.authorAvatar = obj.userId.avatar || obj.authorAvatar;
       obj.author = obj.userId.nickname || obj.author;
+      obj.authorLevel = obj.userId.level || 1;
       obj.userId = obj.userId._id;
     }
     return obj;

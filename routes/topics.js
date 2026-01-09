@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Topic = require('../models/Topic');
 const User = require('../models/User');
+const Like = require('../models/Like');
+const Comment = require('../models/Comment');
 const dbReady = require('../middleware/dbReady'); // 数据库连接检查
 const auth = require('../middleware/auth');
 const apicache = require('apicache');
@@ -29,38 +31,86 @@ router.get('/', dbReady, async (req, res) => {
 // 创建新话题（学生用）
 router.post('/', async (req, res) => {
   const { title, description, icon = '💬' } = req.body;
+  console.log(`[Topic] Creating new topic: ${title}`);
   const topic = new Topic({ title, description, icon });
   await topic.save();
+  console.log(`[Topic] Created topic: ${topic._id}`);
   res.json(topic);
 });
 
-// 获取单个话题详情（支持回复分页）
+// 获取单个话题详情（支持回复分页、排序）
 router.get('/:id', async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  const sort = req.query.sort || 'time'; // 'time' (default) or 'heat'
+  const order = req.query.order === 'asc' ? 1 : -1; // 'desc' (default) or 'asc'
   
   const topic = await Topic.findById(req.params.id);
   if (!topic) return res.status(404).json({ message: '话题不存在' });
   
-  // 提取所有回复的用户ID进行实时头像同步
-  const userIds = topic.replies.map(r => r.userId).filter(id => id);
-  const users = await User.find({ _id: { $in: userIds } }, 'avatar nickname');
-  const userMap = {};
-  users.forEach(u => userMap[u._id.toString()] = u);
+  // 1. 获取所有回复并转换为普通对象
+  let allReplies = topic.replies.map(r => r.toObject());
+  const replyIds = allReplies.map(r => r._id.toString());
 
-  // 计算回复总数
-  const totalReplies = topic.replies.length;
+  // 2. 聚合查询所有回复的点赞数和评论数 (为了支持热度排序)
+  // 即使是按时间排序，为了前端显示方便，我们也一并查出来，避免前端 N+1 请求
+  const [likeCounts, commentCounts] = await Promise.all([
+    Like.aggregate([
+      { $match: { topicReplyId: { $in: replyIds } } },
+      { $group: { _id: '$topicReplyId', count: { $sum: 1 } } }
+    ]),
+    Comment.aggregate([
+      { $match: { topicReplyId: { $in: replyIds } } },
+      { $group: { _id: '$topicReplyId', count: { $sum: 1 } } }
+    ])
+  ]);
   
-  // 对回复进行分页并同步最新头像
-  const paginatedReplies = topic.replies.slice(skip, skip + limit).map(reply => {
-    const r = reply.toObject();
-    if (r.userId && userMap[r.userId.toString()] && !r.isAnonymous) {
-      r.avatar = userMap[r.userId.toString()].avatar || r.avatar;
-      r.author = userMap[r.userId.toString()].nickname || r.author;
-    }
-    return r;
+  const likeMap = {};
+  likeCounts.forEach(c => likeMap[c._id] = c.count);
+  
+  const commentMap = {};
+  commentCounts.forEach(c => commentMap[c._id] = c.count);
+  
+  // 3. 将统计数据附加到回复对象上
+  allReplies.forEach(r => {
+    r.likeCount = likeMap[r._id.toString()] || 0;
+    r.commentCount = commentMap[r._id.toString()] || 0;
+    r.heat = r.likeCount + r.commentCount;
   });
+  
+  // 4. 执行排序
+  if (sort === 'heat') {
+    allReplies.sort((a, b) => {
+      if (a.heat !== b.heat) return (a.heat - b.heat) * order;
+      // 热度相同时，按时间排序
+      return (new Date(a.createdAt) - new Date(b.createdAt)) * order; 
+    });
+  } else {
+    // 按时间排序 (默认)
+    allReplies.sort((a, b) => {
+      return (new Date(a.createdAt) - new Date(b.createdAt)) * order;
+    });
+  }
+  
+  // 5. 分页截取
+  const totalReplies = allReplies.length;
+  const skipIndex = (page - 1) * limit;
+  const paginatedReplies = allReplies.slice(skipIndex, skipIndex + limit);
+  
+  // 6. 同步用户信息 (仅针对当前页的数据)
+  const userIds = paginatedReplies.map(r => r.userId).filter(id => id);
+  if (userIds.length > 0) {
+    const users = await User.find({ _id: { $in: userIds } }, 'avatar nickname');
+    const userMap = {};
+    users.forEach(u => userMap[u._id.toString()] = u);
+    
+    paginatedReplies.forEach(r => {
+      if (r.userId && userMap[r.userId.toString()] && !r.isAnonymous) {
+        r.avatar = userMap[r.userId.toString()].avatar || r.avatar;
+        r.author = userMap[r.userId.toString()].nickname || r.author;
+      }
+    });
+  }
   
   // 返回话题详情和分页后的回复
   res.json({
@@ -117,6 +167,7 @@ router.post('/:id/reply', auth, async (req, res) => {
     images: processedImages 
   });
   await topic.save();
+  console.log(`[Topic] Reply added to ${topic._id} by ${author}`);
   res.json({ message: '回复成功' });
 });
 
