@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时间胶囊</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* 保持你觉得好看的样式，原封不动 */
+    :root { --primary-color: #00695c; --accent-color: #80cbc4; }
+    
+    .title { text-align: center; font-size: 24px; margin: 20px 0 5px; color: var(--primary-color); }
+    .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 25px; }
+    
+    .capsule-box { background: #fff; padding: 25px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 30px; border: 1px solid #f0f0f0; }
+    .time-options { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .time-btn { padding: 10px 18px; border-radius: 20px; border: 1px solid #eee; background: #fff; cursor: pointer; font-size: 14px; color: #666; transition: 0.3s; }
+    .time-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); font-weight: bold; }
+    
+    .custom-date { width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 12px; font-size: 14px; margin-bottom: 15px; box-sizing: border-box; text-align: center; display: none; }
+    .capsule-textarea { width: 100%; height: 180px; padding: 18px; border: 1px solid #eee; border-radius: 18px; font-size: 15px; resize: none; box-sizing: border-box; background: #fafafa; line-height: 1.6; outline: none; }
+    .capsule-button { width: 100%; padding: 15px; background: var(--primary-color); color: white; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,105,92,0.2); }
+    
+    .my-capsules h3 { text-align: center; font-size: 18px; color: #444; margin-bottom: 20px; }
+    .capsule-card { background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 15px; border: 1px solid #f0f0f0; position: relative; }
+    .card-status { font-size: 12px; padding: 4px 10px; border-radius: 10px; display: inline-block; margin-bottom: 12px; }
+    .status-locked { background: #f5f5f5; color: #999; }
+    .status-open { background: #e0f2f1; color: var(--primary-color); }
+    .card-content { font-size: 15px; line-height: 1.6; color: #444; margin: 0 0 12px; }
+    .card-time { font-size: 11px; color: #bbb; display: flex; justify-content: space-between; }
+    
+    .bottom-nav {
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: 56px;
+      z-index: 100;
+    }
+    
+    .nav-item {
+      text-align: center;
+      color: #9e9e9e;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      min-width: 56px;
+      transition: color 300ms;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+    
+    .nav-item:hover {
+      background: rgba(128, 203, 196, 0.1);
+    }
+    
+    .nav-item.active {
+      color: #80cbc4;
+    }
+    
+    .nav-item img {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 4px;
+      transition: transform 300ms;
+    }
+    
+    .nav-item.active img {
+      transform: scale(1.1);
+    }
+
+    /* 分页按钮样式 */
+    #pagination button {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+      color: #666;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    #pagination button:hover:not(:disabled) {
+      background: #f5f5f5;
+      border-color: var(--accent-color);
+    }
+    
+    #pagination button.active {
+      background: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
+    
+    #pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="top-left">
+      <span>时间胶囊</span>
+    </div>
+    <div class="top-right">
+      <button class="logout-btn" onclick="logout()">退出登录</button>
+      <button class="switch-btn" onclick="logout()">切换账户</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <h1 class="title">时间胶囊</h1>
+    <p class="subtitle">给未来的自己写封信</p>
+    <div class="capsule-box">
+      <div class="time-options">
+        <button class="time-btn active" data-months="6">半年后</button>
+        <button class="time-btn" data-months="12">一年后</button>
+        <button class="time-btn" data-months="48">四年后</button>
+        <button class="time-btn" data-custom="true">自定义日期</button>
+      </div>
+      <input type="date" id="custom-unlock-date" class="custom-date">
+      <textarea class="capsule-textarea" id="capsule-content" placeholder="亲爱的未来自己..."></textarea>
+      <button class="capsule-button" onclick="buryCapsule()">密封并埋下</button>
+    </div>
+    <div class="my-capsules"><h3>我的时间胶囊</h3><div id="my-capsules-list"></div></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="location.href='/'">
+      <img src="https://img.icons8.com/color/48/null/leaf.png" alt="广场">
+      <div>树洞广场</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/topic.html'">
+      <img src="https://img.icons8.com/color/48/null/speech-bubble.png" alt="话题">
+      <div>话题讨论</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/tools.html'">
+      <img src="https://img.icons8.com/color/48/null/wrench.png" alt="工具">
+      <div>实用工具</div>
+    </div>
+    <div class="nav-item active" onclick="location.href='/capsule.html'">
+      <img src="https://img.icons8.com/color/48/null/hourglass.png" alt="胶囊">
+      <div>时间胶囊</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/profile.html'">
+      <img src="https://img.icons8.com/color/48/null/user.png" alt="我的">
+      <div>我的</div>
+    </div>
+  </div>
+
+  <script>
+    // 动态获取最新用户信息
+    function getUserInfo() {
+      return {
+        token: localStorage.getItem('token'),
+        nickname: localStorage.getItem('nickname') || ''
+      };
+    }
+    
+    // 显示名字
+    const { nickname: initialNickname } = getUserInfo();
+    if (document.getElementById('nickname')) {
+      document.getElementById('nickname').textContent = initialNickname || '访客';
+    }
+
+    // 2. 核心：判断是否为访客的函数
+    function checkIsVisitor() {
+        const { token, nickname } = getUserInfo();
+        if (!token || !nickname || nickname.indexOf('访客') !== -1) {
+            return true;
+        }
+        return false;
+    }
+
+    // ... 退出登录逻辑保持不变 ...
+
+    // 3. 埋下胶囊
+    async function buryCapsule() {
+        const { token, nickname } = getUserInfo();
+        if (checkIsVisitor()) {
+            alert('❌ 无法发布\n\n访客模式不能埋下时间胶囊。');
+            return;
+        }
+
+        const content = document.getElementById('capsule-content').value.trim();
+        if (!content) return alert('请写点内容再埋哦～');
+
+        const activeBtn = document.querySelector('.time-btn.active');
+        let unlockDate = new Date();
+        
+        if (activeBtn.dataset.custom === "true") {
+            const val = document.getElementById('custom-unlock-date').value;
+            if (!val) return alert('请选择日期');
+            unlockDate = new Date(val);
+        } else {
+            unlockDate.setMonth(unlockDate.getMonth() + parseInt(activeBtn.dataset.months));
+        }
+
+        try {
+            const res = await fetch('/api/capsules', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ content, unlockDate })
+            });
+            
+            if (res.ok) {
+                alert('✨ 胶囊已埋下！');
+                document.getElementById('capsule-content').value = '';
+                loadMyCapsules(1); // 强制刷新第一页
+            } else {
+                alert('发布失败，请重试');
+            }
+        } catch (e) {
+            alert('网络错误');
+        }
+    }
+
+    // 分页相关变量
+    let currentPage = 1;
+    let capsulesPerPage = 5;
+    let totalCapsules = 0;
+    let allCapsules = [];
+
+    // 4. 加载列表
+    async function loadMyCapsules(page = 1) {
+        const { token } = getUserInfo();
+        const listDiv = document.getElementById('my-capsules-list');
+        
+        if (checkIsVisitor()) {
+            listDiv.innerHTML = '<p style="text-align:center;color:#999;font-size:14px;padding:20px;">登录后可查看您的专属胶囊</p>';
+            return;
+        }
+
+        try {
+            if (page === 1) listDiv.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">正在穿越时空加载胶囊...</p>';
+
+            const res = await fetch('/api/capsules/my', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (res.status === 401) {
+                listDiv.innerHTML = '<p style="text-align:center;color:#e57373;padding:20px;">身份信息已过期，请重新登录</p>';
+                setTimeout(() => window.location.href = '/login.html', 2000);
+                return;
+            }
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || '服务器响应错误');
+            }
+            
+            allCapsules = await res.json();
+            totalCapsules = allCapsules.length;
+            currentPage = page;
+
+            if (totalCapsules === 0) {
+                listDiv.innerHTML = '<p style="text-align:center;color:#999;font-size:14px;padding:20px;">还没有埋下过胶囊哦...</p>';
+                if (document.getElementById('pagination')) document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            const startIndex = (currentPage - 1) * capsulesPerPage;
+            const paginatedCapsules = allCapsules.slice(startIndex, startIndex + capsulesPerPage);
+            
+            const now = new Date();
+            listDiv.innerHTML = paginatedCapsules.map(c => {
+                const unlockTime = new Date(c.unlockDate);
+                const isUnlocked = c.isUnlocked || unlockTime <= now;
+                return `
+                <div class="capsule-card">
+                    <span class="card-status ${isUnlocked ? 'status-open' : 'status-locked'}">
+                        ${isUnlocked ? '✅ 已开启' : '🔒 封存中'}
+                    </span>
+                    <p class="card-content">${isUnlocked ? c.content : '🔒 这是一个密封的未来信息...'}</p>
+                    <div class="card-time">
+                        <span>创建: ${new Date(c.createdAt).toLocaleDateString()}</span>
+                        <span>解封: ${unlockTime.toLocaleDateString()}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            generatePagination();
+        } catch (e) {
+            console.error('[Frontend Capsule Load Error]:', e);
+            listDiv.innerHTML = `
+                <div style="text-align:center;padding:20px;">
+                    <p style="color:#e57373;margin-bottom:10px;">🛸 加载失败: ${e.message}</p>
+                    <button onclick="loadMyCapsules(1)" style="padding:8px 16px;background:var(--primary-color);color:white;border:none;border-radius:20px;cursor:pointer;">点此重试</button>
+                </div>
+            `;
+        }
+    }
+
+    // 生成分页控件
+    function generatePagination() {
+        const totalPages = Math.ceil(totalCapsules / capsulesPerPage);
+        let paginationContainer = document.getElementById('pagination');
+        
+        // 关键修复：如果容器不存在，创建并正确赋值给变量
+        if (!paginationContainer) {
+            const myCapsulesDiv = document.querySelector('.my-capsules');
+            if (!myCapsulesDiv) return; // 安全检查
+            
+            paginationContainer = document.createElement('div');
+            paginationContainer.id = 'pagination';
+            paginationContainer.style.cssText = 'display:flex;justify-content:center;gap:10px;padding:20px 0;';
+            myCapsulesDiv.appendChild(paginationContainer);
+        }
+        
+        // 现在 paginationContainer 绝对不是 null
+        paginationContainer.innerHTML = '';
+        
+        // 首页按钮
+        const firstPageBtn = document.createElement('button');
+        firstPageBtn.textContent = '首页';
+        firstPageBtn.disabled = currentPage === 1;
+        firstPageBtn.onclick = () => loadMyCapsules(1);
+        paginationContainer.appendChild(firstPageBtn);
+        
+        // 上一页按钮
+        const prevPageBtn = document.createElement('button');
+        prevPageBtn.textContent = '上一页';
+        prevPageBtn.disabled = currentPage === 1;
+        prevPageBtn.onclick = () => loadMyCapsules(currentPage - 1);
+        paginationContainer.appendChild(prevPageBtn);
+        
+        // 页码按钮
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.textContent = i;
+            pageBtn.className = i === currentPage ? 'active' : '';
+            pageBtn.onclick = () => loadMyCapsules(i);
+            paginationContainer.appendChild(pageBtn);
+        }
+        
+        // 下一页按钮
+        const nextPageBtn = document.createElement('button');
+        nextPageBtn.textContent = '下一页';
+        nextPageBtn.disabled = currentPage === totalPages;
+        nextPageBtn.onclick = () => loadMyCapsules(currentPage + 1);
+        paginationContainer.appendChild(nextPageBtn);
+        
+        // 末页按钮
+        const lastPageBtn = document.createElement('button');
+        lastPageBtn.textContent = '末页';
+        lastPageBtn.disabled = currentPage === totalPages;
+        lastPageBtn.onclick = () => loadMyCapsules(totalPages);
+        paginationContainer.appendChild(lastPageBtn);
+    }
+
+    // 5. 按钮切换逻辑
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('custom-unlock-date').style.display = (btn.dataset.custom === "true") ? 'block' : 'none';
+        };
+    });
+
+    // 页面加载时执行一次
+    window.addEventListener('DOMContentLoaded', () => {
+        loadMyCapsules();
+    });
+  </script>
+</body>
+</html>

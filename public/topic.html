@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>话题讨论</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .title { text-align: center; font-size: 24px; color: #333; margin: 20px 0; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+
+    .topic-card { background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .topic-card .left { display: flex; align-items: center; }
+    .topic-card .icon { width: 50px; height: 50px; border-radius: 50%; background: #e0f2f1; display: flex; justify-content: center; align-items: center; font-size: 24px; margin-right: 15px; color: #00695c; }
+    .topic-card .info h3 { margin: 0; font-size: 18px; color: #333; }
+    .topic-card .info p { margin: 5px 0 0; color: #666; font-size: 14px; }
+    .topic-card .enter { color: #80cbc4; font-size: 14px; }
+
+    .create-btn { background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; cursor: pointer; font-size: 18px; color: #00695c; margin: 30px 0; }
+
+    .bottom-nav {
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: 56px;
+      z-index: 100;
+    }
+    
+    .nav-item {
+      text-align: center;
+      color: #9e9e9e;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      min-width: 56px;
+      transition: color 300ms;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+    
+    .nav-item:hover {
+      background: rgba(128, 203, 196, 0.1);
+    }
+    
+    .nav-item.active {
+      color: #80cbc4;
+    }
+    
+    .nav-item img {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 4px;
+      transition: transform 300ms;
+    }
+    
+    .nav-item.active img {
+      transform: scale(1.1);
+    }
+
+    /* 分页按钮样式 */
+    #pagination button {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+      color: #666;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    #pagination button:hover:not(:disabled) {
+      background: #f5f5f5;
+      border-color: #80cbc4;
+    }
+    
+    #pagination button.active {
+      background: #80cbc4;
+      color: white;
+      border-color: #80cbc4;
+    }
+    
+    #pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+<div class="top-left">
+  <button style="background:none;border:none;font-size:28px;cursor:pointer;margin-right:10px;" onclick="history.back()">←</button>
+  <span>话题讨论</span>
+</div>
+    <div class="top-right">
+      <button class="logout-btn" onclick="logout()">退出登录</button>
+      <button class="switch-btn" onclick="logout()">切换账户</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <h1 class="title">话题讨论</h1>
+    <p class="subtitle">寻找你的同频共振</p>
+
+    <!-- 动态加载所有话题（包括固定4个） -->
+    <div id="topic-list"></div>
+
+    <!-- 分页控件容器 -->
+    <div id="pagination" style="display:flex;justify-content:center;gap:10px;padding:20px 0;">
+      <!-- 分页控件将在这里动态生成 -->
+    </div>
+
+    <!-- 创建新话题按钮 -->
+    <div class="create-btn" onclick="createTopic()">+ 创建新话题</div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="location.href='/'">
+      <img src="https://img.icons8.com/color/48/null/leaf.png" alt="广场">
+      <div>树洞广场</div>
+    </div>
+    <div class="nav-item active" onclick="location.href='/topic.html'">
+      <img src="https://img.icons8.com/color/48/null/speech-bubble.png" alt="话题">
+      <div>话题讨论</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/tools.html'">
+      <img src="https://img.icons8.com/color/48/null/wrench.png" alt="工具">
+      <div>实用工具</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/capsule.html'">
+      <img src="https://img.icons8.com/color/48/null/hourglass.png" alt="胶囊">
+      <div>时间胶囊</div>
+    </div>
+    <div class="nav-item" onclick="location.href='/profile.html'">
+      <img src="https://img.icons8.com/color/48/null/user.png" alt="我的">
+      <div>我的</div>
+    </div>
+  </div>
+
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = '/login.html';
+    }
+
+    const nickname = localStorage.getItem('nickname') || '访客';
+    if (document.getElementById('nickname')) {
+      document.getElementById('nickname').textContent = nickname;
+    }
+
+    // 初始化头像显示
+    function initAvatar() {
+      const avatarImg = document.getElementById('navAvatar');
+      if (!avatarImg) return;
+      
+      const savedAvatar = localStorage.getItem('avatar');
+      if (savedAvatar) {
+        avatarImg.src = savedAvatar;
+        avatarImg.style.display = 'block';
+      } else {
+        avatarImg.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${nickname}`;
+        avatarImg.style.display = 'block';
+      }
+
+      fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.avatar) {
+          avatarImg.src = data.avatar;
+          localStorage.setItem('avatar', data.avatar);
+        }
+        if (data.nickname) {
+          localStorage.setItem('nickname', data.nickname);
+          document.getElementById('nickname').textContent = data.nickname;
+        }
+      })
+      .catch(err => console.error('Failed to fetch user info', err));
+    }
+    
+    initAvatar();
+
+    function logout() {
+      if (confirm('确定要退出或切换账户吗？')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('nickname');
+        window.location.href = '/login.html';
+      }
+    }
+
+    // 分页相关变量
+    let currentPage = 1;
+    let topicsPerPage = 10;
+    let totalTopics = 0;
+    let allTopics = [];
+
+    // 加载所有话题
+    async function loadTopics(page = 1) {
+      const list = document.getElementById('topic-list');
+      // 显示加载状态
+      list.innerHTML = '<p style="text-align:center;color:#80cbc4;">正在加载话题...</p>';
+      
+      try {
+        // 直接从服务器获取指定页的数据
+        const res = await fetch(`/api/topics?page=${page}&limit=${topicsPerPage}`);
+        if (!res.ok) {
+          throw new Error('网络请求失败');
+        }
+        const responseData = await res.json();
+        
+        // 安全地处理响应数据
+        if (!responseData) {
+          throw new Error('无效的响应数据');
+        }
+        
+        const topics = responseData.topics || [];
+        totalTopics = responseData.totalItems || 0;
+        currentPage = page;
+
+        if (topics.length === 0) {
+          list.innerHTML = '<p style="text-align:center;color:#999;">暂无话题，敬请期待...</p>';
+        } else {
+          list.innerHTML = topics.map(t => `
+            <div class="topic-card" onclick="location.href='/topic-detail.html?id=${t._id}'">
+              <div class="left">
+                <div class="icon">${t.icon || '💬'}</div>
+                <div class="info">
+                  <h3>${t.title} <span class="topic-count">(${t.replies ? t.replies.length : 0}人讨论)</span></h3>
+                  <p>${t.description || '暂无描述'}</p>
+                </div>
+              </div>
+              <div class="enter">进入讨论 →</div>
+            </div>
+          `).join('');
+        }
+
+        // 生成分页控件
+        generatePagination();
+      } catch (err) {
+        console.log('加载话题失败', err);
+        list.innerHTML = `<p style="text-align:center;color:#ff8a80;">加载话题失败：${err.message}，请刷新页面重试</p>`;
+      }
+    }
+
+    // 生成分页控件
+    function generatePagination() {
+      const totalPages = Math.ceil(totalTopics / topicsPerPage);
+      const paginationContainer = document.getElementById('pagination');
+      
+      // 清空现有分页控件
+      paginationContainer.innerHTML = '';
+      
+      // 首页按钮
+      const firstPageBtn = document.createElement('button');
+      firstPageBtn.textContent = '首页';
+      firstPageBtn.disabled = currentPage === 1;
+      firstPageBtn.onclick = () => loadTopics(1);
+      paginationContainer.appendChild(firstPageBtn);
+      
+      // 上一页按钮
+      const prevPageBtn = document.createElement('button');
+      prevPageBtn.textContent = '上一页';
+      prevPageBtn.disabled = currentPage === 1;
+      prevPageBtn.onclick = () => loadTopics(currentPage - 1);
+      paginationContainer.appendChild(prevPageBtn);
+      
+      // 页码按钮
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, currentPage + 2);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        pageBtn.className = i === currentPage ? 'active' : '';
+        pageBtn.onclick = () => loadTopics(i);
+        paginationContainer.appendChild(pageBtn);
+      }
+      
+      // 下一页按钮
+      const nextPageBtn = document.createElement('button');
+      nextPageBtn.textContent = '下一页';
+      nextPageBtn.disabled = currentPage === totalPages;
+      nextPageBtn.onclick = () => loadTopics(currentPage + 1);
+      paginationContainer.appendChild(nextPageBtn);
+      
+      // 末页按钮
+      const lastPageBtn = document.createElement('button');
+      lastPageBtn.textContent = '末页';
+      lastPageBtn.disabled = currentPage === totalPages;
+      lastPageBtn.onclick = () => loadTopics(totalPages);
+      paginationContainer.appendChild(lastPageBtn);
+    }
+
+    // 创建新话题
+    async function createTopic() {
+      const title = prompt('新话题标题：');
+      if (!title) return;
+      const description = prompt('话题描述（可选）：');
+      const icon = prompt('小图标（emoji，比如💬）：', '💬');
+
+      try {
+        await fetch('/api/topics', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ title, description, icon })
+        });
+        alert('创建成功！');
+        loadTopics();
+      } catch (err) {
+        alert('创建失败，请重试');
+      }
+    }
+
+    loadTopics();
+  </script>
+</body>
+</html>

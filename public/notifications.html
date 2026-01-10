@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通知中心</title>
+  <style>
+    body { margin: 0; padding: 0; background: #f7fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; color: #2d3748; }
+    .top { padding: 15px 20px; background: #fff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+    .top-left { display: flex; align-items: center; }
+    .top-left button { background:none; border:none; font-size:24px; cursor:pointer; margin-right:10px; color: #4a5568; }
+    .top-center { font-weight: bold; font-size: 18px; }
+    .top-right button { background: none; border: none; color: #80cbc4; font-size: 14px; cursor: pointer; }
+
+    .tabs { display: flex; background: #fff; padding: 0 10px; border-bottom: 1px solid #edf2f7; position: sticky; top: 60px; z-index: 99; }
+    .tab { flex: 1; text-align: center; padding: 15px 0; cursor: pointer; font-size: 14px; color: #718096; position: relative; }
+    .tab.active { color: #80cbc4; font-weight: 600; }
+    .tab.active::after { content: ''; position: absolute; bottom: 0; left: 25%; width: 50%; height: 3px; background: #80cbc4; border-radius: 3px 3px 0 0; }
+
+    .content { flex: 1; padding: 0; overflow-y: auto; }
+    
+    .notification-list { list-style: none; padding: 0; margin: 0; }
+    .notification-item { padding: 20px; background: #fff; border-bottom: 1px solid #edf2f7; display: flex; gap: 15px; cursor: pointer; transition: background 0.2s; }
+    .notification-item:hover { background: #f7fafc; }
+    .notification-item.unread { background: #f0fff4; }
+    
+    .icon-box { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .icon-post { background: #e6fffa; color: #38b2ac; }
+    .icon-reply { background: #ebf8ff; color: #4299e1; }
+    .icon-like { background: #fff5f5; color: #f56565; }
+    .icon-mention { background: #faf5ff; color: #9f7aea; }
+    .icon-system { background: #edf2f7; color: #718096; }
+
+    .info { flex: 1; }
+    .info-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .sender { font-weight: 600; font-size: 15px; color: #2d3748; }
+    .time { font-size: 12px; color: #a0aec0; }
+    .text { font-size: 14px; color: #4a5568; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .quote { margin-top: 8px; padding: 8px 12px; background: #f7fafc; border-radius: 8px; font-size: 13px; color: #718096; border-left: 3px solid #cbd5e0; }
+
+    .loading, .empty { text-align: center; padding: 30px; color: #a0aec0; font-size: 14px; }
+    .load-more { text-align: center; padding: 15px; color: #80cbc4; cursor: pointer; font-size: 14px; }
+
+    /* 移动端适配 */
+    @media (max-width: 480px) {
+      .notification-item { padding: 15px; }
+      .icon-box { width: 36px; height: 36px; font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="top-left">
+      <button onclick="history.back()">←</button>
+    </div>
+    <div class="top-center">通知中心</div>
+    <div class="top-right">
+      <button onclick="markAllRead()">全部已读</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('all')">全部</div>
+    <div class="tab" onclick="switchTab('unread')">未读</div>
+    <div class="tab" onclick="switchTab('reply')">回复</div>
+    <div class="tab" onclick="switchTab('mention')">@我</div>
+    <div class="tab" onclick="switchTab('system')">系统</div>
+  </div>
+
+  <div class="content" id="scrollContainer">
+    <div id="list" class="notification-list"></div>
+    <div id="loading" class="loading" style="display: none;">加载中...</div>
+    <div id="loadMore" class="load-more" style="display: none;" onclick="loadMore()">点击加载更多</div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let currentPage = 1;
+    let currentFilter = 'all';
+    let isLoading = false;
+    let hasMore = true;
+    let socket;
+
+    // 初始化 Socket.IO
+    function initSocket() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // 解析 token 获取 userId (简单解析，实际应使用库)
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        const payload = JSON.parse(jsonPayload);
+        const userId = payload.userId;
+
+        socket = io();
+        socket.on('connect', () => {
+          console.log('Socket connected');
+          socket.emit('register', userId);
+        });
+
+        socket.on('notification', (notification) => {
+          console.log('New notification:', notification);
+          // 如果在"全部"或对应类型的标签下，直接插入顶部
+          if (currentFilter === 'all' || currentFilter === 'unread' || currentFilter === notification.type) {
+            prependNotification(notification);
+          }
+          // 可以在这里添加全局红点提示逻辑
+        });
+        
+        // 监听广播通知（新帖子等）
+        socket.on('notification_broadcast', (data) => {
+          // 排除自己
+          if (data.excludeUserId === userId) return;
+          
+          console.log('Broadcast notification:', data);
+          // 构造成 notification 对象
+          const notification = {
+            ...data,
+            read: false,
+            createdAt: new Date()
+          };
+          
+          if (currentFilter === 'all' || currentFilter === 'unread' || currentFilter === data.type) {
+            prependNotification(notification);
+          }
+        });
+
+      } catch (e) {
+        console.error('Socket init error:', e);
+      }
+    }
+
+    // 切换标签
+    function switchTab(type) {
+      if (currentFilter === type) return;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      currentFilter = type;
+      currentPage = 1;
+      hasMore = true;
+      document.getElementById('list').innerHTML = '';
+      loadNotifications();
+    }
+
+    // 加载通知
+    async function loadNotifications() {
+      if (isLoading || !hasMore) return;
+      isLoading = true;
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('loadMore').style.display = 'none';
+
+      try {
+        const token = localStorage.getItem('token');
+        let url = `/api/notifications?page=${currentPage}&limit=10`;
+        if (currentFilter !== 'all') {
+          url += `&type=${currentFilter}`;
+        }
+
+        const res = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.notifications.length === 0) {
+          hasMore = false;
+          if (currentPage === 1) {
+            document.getElementById('list').innerHTML = '<div class="empty">暂无通知</div>';
+          }
+        } else {
+          renderNotifications(data.notifications);
+          if (currentPage >= data.totalPages) {
+            hasMore = false;
+          } else {
+            document.getElementById('loadMore').style.display = 'block';
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('list').innerHTML = '<div class="empty">加载失败</div>';
+      } finally {
+        isLoading = false;
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    // 渲染列表
+    function renderNotifications(list) {
+      const container = document.getElementById('list');
+      list.forEach(n => {
+        container.appendChild(createNotificationElement(n));
+      });
+    }
+
+    // 插入新通知到顶部
+    function prependNotification(n) {
+      const container = document.getElementById('list');
+      // 如果显示"暂无通知"，先清空
+      if (container.querySelector('.empty')) {
+        container.innerHTML = '';
+      }
+      container.insertBefore(createNotificationElement(n), container.firstChild);
+    }
+
+    // 创建通知DOM
+    function createNotificationElement(n) {
+      const div = document.createElement('div');
+      div.className = `notification-item ${n.read ? '' : 'unread'}`;
+      div.onclick = () => handleClick(n);
+
+      let iconClass = 'icon-system';
+      let iconText = '🔔';
+      let detailText = '';
+
+      switch (n.type) {
+        case 'post': iconClass = 'icon-post'; iconText = '📝'; break;
+        case 'reply': iconClass = 'icon-reply'; iconText = '💬'; break;
+        case 'like': iconClass = 'icon-like'; iconText = '❤️'; break;
+        case 'mention': iconClass = 'icon-mention'; iconText = '@'; break;
+        case 'capsule': iconClass = 'icon-system'; iconText = '💊'; break;
+      }
+
+      if (n.detail) {
+        if (n.detail.postContent) detailText = n.detail.postContent;
+        else if (n.detail.replyContent) detailText = n.detail.replyContent;
+        else if (n.detail.mentionedIn) detailText = n.detail.mentionedIn;
+        else if (n.detail.capsuleContent) detailText = n.detail.capsuleContent;
+      }
+
+      const timeStr = formatTime(n.createdAt);
+
+      div.innerHTML = `
+        <div class="icon-box ${iconClass}">${iconText}</div>
+        <div class="info">
+          <div class="info-header">
+            <span class="sender">${n.senderName || '系统通知'}</span>
+            <span class="time">${timeStr}</span>
+          </div>
+          <div class="text">${n.content}</div>
+          ${detailText ? `<div class="quote">${detailText}</div>` : ''}
+        </div>
+      `;
+      return div;
+    }
+
+    // 处理点击
+    async function handleClick(n) {
+      // 1. 标记已读
+      if (!n.read) {
+        try {
+          const token = localStorage.getItem('token');
+          await fetch(`/api/notifications/${n._id}/read`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          // 更新UI
+          // 重新加载或者直接修改样式
+          // 这里为了简单直接跳转，但最好更新样式
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // 2. 跳转
+      if (n.relatedId) {
+        // 根据类型跳转不同页面
+        // 这里假设都是跳转到首页并展开，或者有详情页
+        // 目前项目结构主要是单页应用模式，或者跳转到 topic-detail.html
+        // 简单处理：跳转到首页并带上 highlight 参数
+        // 如果有 topic.html, capsule.html 等，需要区分
+        if (n.type === 'capsule') {
+          window.location.href = '/capsule.html';
+        } else {
+          // 帖子相关
+          // 理想情况：/post-detail.html?id=xxx
+          // 现状：首页 index.html 是列表
+          // 我们跳转到 index.html 并尝试定位（需要 index.html 支持）
+          // 或者简单的 alert 提示 "请在首页查看"
+          // 为了更好的体验，我们假设可以跳转到首页
+          window.location.href = `/?highlight=${n.relatedId}`;
+        }
+      }
+    }
+
+    // 全部已读
+    async function markAllRead() {
+      if (!confirm('确定将所有通知标记为已读？')) return;
+      try {
+        const token = localStorage.getItem('token');
+        await fetch('/api/notifications/read-all', {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        // 刷新列表
+        currentPage = 1;
+        document.getElementById('list').innerHTML = '';
+        loadNotifications();
+      } catch (e) {
+        alert('操作失败');
+      }
+    }
+
+    function loadMore() {
+      currentPage++;
+      loadNotifications();
+    }
+
+    // 时间格式化
+    function formatTime(dateStr) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diff = (now - date) / 1000; // seconds
+
+      if (diff < 60) return '刚刚';
+      if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+      if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+      if (diff < 2592000) return Math.floor(diff / 86400) + '天前';
+      return date.toLocaleDateString();
+    }
+
+    // 启动
+    initSocket();
+    loadNotifications();
+
+    // 滚动加载
+    document.getElementById('scrollContainer').addEventListener('scroll', (e) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.target;
+      if (scrollTop + clientHeight >= scrollHeight - 50) {
+        loadNotifications();
+      }
+    });
+  </script>
+</body>
+</html>
