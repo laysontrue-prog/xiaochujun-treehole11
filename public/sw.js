@@ -1,65 +1,88 @@
-const CACHE_NAME = 'treehole-cache-v1';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'shudon-cache-v1';
+const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/topic.html',
-  '/tools.html',
-  '/capsule.html',
-  '/profile.html',
-  '/login.html',
   '/style.css',
-  '/logo.png',
-  'https://img.icons8.com/color/48/null/leaf.png',
-  'https://img.icons8.com/color/48/null/speech-bubble.png',
-  'https://img.icons8.com/color/48/null/wrench.png',
-  'https://img.icons8.com/color/48/null/hourglass.png',
-  'https://img.icons8.com/color/48/null/user.png'
+  '/image-viewer.js',
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
-// 安装事件：缓存静态资源
+// 拦截图片请求的正则
+const IMAGE_REGEX = /\.(jpg|jpeg|png|gif|webp)$/i;
+const IMGBB_REGEX = /imgbb\.com|ibb\.co/;
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Service Worker: Caching files');
-      return cache.addAll(ASSETS_TO_CACHE);
+      // 尝试缓存静态资源，如果失败也不阻塞安装
+      return cache.addAll(STATIC_ASSETS).catch(err => {
+        console.warn('部分静态资源缓存失败:', err);
+      });
     })
   );
+  self.skipWaiting();
 });
 
-// 激活事件：清理旧缓存
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Clearing Old Cache');
-            return caches.delete(cache);
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
           }
         })
       );
     })
   );
+  self.clients.claim();
 });
 
-// Fetch事件：网络优先，失败则使用缓存 (Network First, then Cache)
-// 对于API请求，我们不做SW缓存，由后端apicache处理或直接网络请求
 self.addEventListener('fetch', (event) => {
-  // 排除API请求和Socket.io请求
-  if (event.request.url.includes('/api/') || event.request.url.includes('socket.io')) {
+  const url = new URL(event.request.url);
+
+  // 1. 处理图片请求 (Stale-while-revalidate 策略)
+  if (IMAGE_REGEX.test(url.pathname) || IMGBB_REGEX.test(url.hostname)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          const fetchPromise = fetch(event.request).then((networkResponse) => {
+            // 只有成功响应才更新缓存
+            if (networkResponse.ok) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => {
+             // 网络失败时，如果有缓存则返回缓存，否则返回失败
+             return cachedResponse;
+          });
+
+          // 如果有缓存，优先返回缓存，后台更新
+          return cachedResponse || fetchPromise;
+        });
+      })
+    );
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        // 克隆响应，一份给浏览器，一份存入缓存
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, resClone);
+  // 2. 处理静态资源 (Cache First 策略)
+  if (STATIC_ASSETS.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+        return response || fetch(event.request).then((networkResponse) => {
+           return caches.open(CACHE_NAME).then((cache) => {
+             cache.put(event.request, networkResponse.clone());
+             return networkResponse;
+           });
         });
-        return res;
       })
-      .catch(() => caches.match(event.request).then((res) => res))
-  );
+    );
+    return;
+  }
+
+  // 3. 其他请求 (Network First / 默认)
+  // 对于 API 请求，通常不缓存或由浏览器默认处理
 });

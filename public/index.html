@@ -1344,7 +1344,7 @@
           if (p.images && p.images.length > 0) {
             imagesHtml = `
               <div class="post-images" onclick="event.stopPropagation()">
-                ${p.images.map(img => `<img src="${img}" class="post-image" loading="lazy">`).join('')}
+                ${p.images.map(img => `<img src="" data-src="${img}" data-fullsrc="${img}" class="post-image lazy-img" loading="lazy" decoding="async">`).join('')}
               </div>
             `;
           }
@@ -1587,7 +1587,7 @@
           if (c.images && c.images.length > 0) {
             imagesHtml = `
               <div class="post-images" style="margin-top:8px;">
-                ${c.images.map(img => `<img src="${img}" class="post-image" style="width:80px;height:80px;" onerror="this.onerror=null;this.src='https://placehold.co/200x200?text=Error';">`).join('')}
+                ${c.images.map(img => `<img src="" data-src="${img}" data-fullsrc="${img}" class="post-image lazy-img" style="width:80px;height:80px;" loading="lazy" decoding="async">`).join('')}
               </div>
             `;
           }
@@ -1727,7 +1727,7 @@
       list.style.display = 'flex';
       list.innerHTML = images.map((img, index) => `
         <div class="comment-preview-item">
-          <img src="${img}">
+          <img src="${img}" class="preview-image" loading="lazy" decoding="async">
           <button class="remove-btn" onclick="removeCommentImage('${postId}', ${index})">×</button>
         </div>
       `).join('');
@@ -1908,7 +1908,6 @@
           const img = new Image();
           img.src = e.target.result;
           img.onload = () => {
-            // 设置最大尺寸
             const maxWidth = 1024;
             const maxHeight = 1024;
             let width = img.width;
@@ -1932,9 +1931,29 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // 压缩质量 0.7
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-            resolve(dataUrl);
+            const sizeKB = (dataUrl) => (dataUrl.length * 0.75) / 1024;
+            const tryEncode = (type, quality) => {
+              try {
+                const out = canvas.toDataURL(type, quality);
+                if (type === 'image/webp' && !out.startsWith('data:image/webp')) return null;
+                return out;
+              } catch (err) {
+                return null;
+              }
+            };
+
+            const qualityCandidates = [0.85, 0.82, 0.8, 0.78, 0.75];
+            let best = null;
+            for (const q of qualityCandidates) {
+              const out = tryEncode('image/webp', q) || tryEncode('image/jpeg', q);
+              if (!out) continue;
+              best = out;
+              if (sizeKB(out) <= 700) break;
+            }
+
+            if (!best) return reject(new Error('图片编码失败'));
+            if (sizeKB(best) > 800) return reject(new Error('图片过大，请选择更小的图片'));
+            resolve(best);
           };
           img.onerror = reject;
         };
@@ -1947,7 +1966,7 @@
       const list = document.getElementById('previewList');
       list.innerHTML = pendingImages.map((img, index) => `
         <div class="preview-item">
-          <img src="${img}" class="preview-image">
+          <img src="${img}" class="preview-image" loading="lazy" decoding="async">
           <button class="remove-btn" onclick="removeImage(${index})">×</button>
         </div>
       `).join('');
